@@ -64,3 +64,16 @@ Job Queue Handling
 Fault Tolerance
 - If a worker crashes, the jobs are not lost because they remain in the queue.
 - Once the worker restarts, it resumes processing the pending jobs from the queue.
+
+### Routing 
+- For every http reques the application function is called by the frappe app.py
+- application function set the local config,db connection by init_request and do the authendication by validate_auth function and after that the url mapped to handle function if it started by "api/".
+- handle function handles the request route  match in API_RULE mapping.
+- "api/method/.." this type of endpoints are call the whitelisted function 
+- whitelisted endpoints are used to produce the web to users/guests and provide customized endpoints.
+- the function is processed by seperating the end points last name by the '.'. (ex: quickfix.api.method structure : quickfix/api/method.py)
+- after that function is called by the execute_cmd(cmd)
+- for "api/resources/..." endpoints the functions like get_doc update or etc are call by the url structure.
+- this also v1 so the v1.py file handles this request
+- There is some url rules used to map and call the correct function regarding to the end points
+- the url rules divide into v1 and v2 
