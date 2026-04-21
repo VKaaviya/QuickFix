@@ -38,3 +38,29 @@ This app can use GitHub Actions for CI. The following workflows are configured:
 ### License
 
 mit
+
+## Configuration Files
+site_config.json
+- Used to define configuration settings for a specific site. Each site can have its own independent configuration.
+common_site_config.json
+Used for bench-level (global) configurations that apply to all sites within the bench.
+Security Note
+Storing sensitive information (like passwords, API keys, secrets) in common_site_config.json is not recommended, as it increases the risk of exposure across multiple sites.
+Bench Start Process
+
+# When you run bench start, the following services are launched:
+
+* Web server
+* Background workers
+* Redis Cache
+* Redis Queue
+* Redis SocketIO
+
+Job Queue Handling
+- Jobs are added (enqueued) into the Redis Queue.
+- The queue’s role is to store jobs, not execute them.
+- Workers are responsible for picking up and executing these jobs.
+
+Fault Tolerance
+- If a worker crashes, the jobs are not lost because they remain in the queue.
+- Once the worker restarts, it resumes processing the pending jobs from the queue.
