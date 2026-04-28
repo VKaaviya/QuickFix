@@ -6,6 +6,15 @@ app_version = "0.0.1"
 app_email = "kaviyaveerapandi21@gmail.com"
 app_license = "mit"
 
+fixtures=[
+    {
+        "doctype":"Custom DocPerm",
+    }
+]
+
+
+
+
 # Apps
 # ------------------
 
@@ -127,13 +136,13 @@ app_license = "mit"
 # -----------
 # Permissions evaluated in scripted ways
 
-# permission_query_conditions = {
-# 	"Event": "frappe.desk.doctype.event.event.get_permission_query_conditions",
-# }
+permission_query_conditions = {
+	"Job card": "quickfix.quickfix.doctype.job_card.job_card.get_permission_query_conditions",
+}
 #
-# has_permission = {
-# 	"Event": "frappe.desk.doctype.event.event.has_permission",
-# }
+has_permission = {
+	"Service Invoice": "quickfix.quickfix.doctype.service_invoice.service_invoice.has_permission",
+}
 
 # Document Events
 # ---------------
