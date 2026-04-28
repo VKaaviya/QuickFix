@@ -1,0 +1,143 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "TECH.####",
+ "creation": "2026-04-22 12:15:49.494530",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "technician_name",
+  "employee_id",
+  "phone",
+  "email",
+  "specilization",
+  "status",
+  "photo",
+  "joining_date",
+  "user",
+  "notes"
+ ],
+ "fields": [
+  {
+   "bold": 1,
+   "fieldname": "technician_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Technician name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee_id",
+   "fieldtype": "Data",
+   "label": "Employee id",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email"
+  },
+  {
+   "fieldname": "specilization",
+   "fieldtype": "Link",
+   "label": "Specilization",
+   "options": "Device Type"
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_filter": 1,
+   "in_list_view": 1,
+   "label": "status",
+   "options": "On leave\nActive\nResigned"
+  },
+  {
+   "fieldname": "photo",
+   "fieldtype": "Attach Image",
+   "label": "Photo"
+  },
+  {
+   "fieldname": "joining_date",
+   "fieldtype": "Date",
+   "label": "Joining date"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "user",
+   "options": "User",
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text",
+   "label": "Notes",
+   "mandatory_depends_on": "\"eval:doc.status=='On Leave'\""
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-04-28 15:16:38.705262",
+ "modified_by": "kaviyaveerapandi21@gmail.com",
+ "module": "Quickfix",
+ "name": "Technician",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Service Staff",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "if_owner": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Technician",
+   "share": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

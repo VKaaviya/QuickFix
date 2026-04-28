@@ -1,0 +1,265 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "JC-.YYYY.-.#####",
+ "creation": "2026-04-22 13:19:42.331673",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "customer_and_device_section",
+  "customer_name",
+  "amended_from",
+  "customer_phone",
+  "customer_email",
+  "device_type",
+  "device_brand",
+  "device_model",
+  "imei_or_serial",
+  "problem_description",
+  "section_break_duyf",
+  "assigned_technician",
+  "diagnosis_notes",
+  "estimate_cost",
+  "diagnosis_date",
+  "priority",
+  "section_break_cwlx",
+  "parts_used",
+  "financial_and_delivery_section",
+  "parts_total",
+  "labour_charge",
+  "final_amountc",
+  "payment_status",
+  "delivery_date",
+  "remarks",
+  "status"
+ ],
+ "fields": [
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Job card",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_phone",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_preview": 1,
+   "label": "Customer Phone",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer_email",
+   "fieldtype": "Data",
+   "label": "Customer email"
+  },
+  {
+   "fieldname": "device_type",
+   "fieldtype": "Link",
+   "label": "Device type",
+   "options": "Device Type",
+   "reqd": 1
+  },
+  {
+   "fieldname": "device_brand",
+   "fieldtype": "Data",
+   "label": "Device brand"
+  },
+  {
+   "fieldname": "device_model",
+   "fieldtype": "Data",
+   "label": "Device model"
+  },
+  {
+   "fieldname": "imei_or_serial",
+   "fieldtype": "Data",
+   "label": "IMEI or Serial"
+  },
+  {
+   "fieldname": "problem_description",
+   "fieldtype": "Text Editor",
+   "label": "Problem description",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_duyf",
+   "fieldtype": "Section Break",
+   "label": "Assignment and diagnosis"
+  },
+  {
+   "fieldname": "assigned_technician",
+   "fieldtype": "Link",
+   "label": "Assigned technician",
+   "options": "Technician"
+  },
+  {
+   "fieldname": "diagnosis_notes",
+   "fieldtype": "Text Editor",
+   "label": "Diagnosis Notes",
+   "mandatory_depends_on": "\"eval:doc.assigned_technician\""
+  },
+  {
+   "depends_on": "\"eval:doc.diagnosis_notes\"",
+   "fieldname": "estimate_cost",
+   "fieldtype": "Currency",
+   "label": "Estimate cost"
+  },
+  {
+   "fieldname": "diagnosis_date",
+   "fieldtype": "Date",
+   "label": "Diagnosis Date",
+   "mandatory_depends_on": "\"eval:doc.diagnosis_notes\""
+  },
+  {
+   "default": "Normal",
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "priority",
+   "options": "Normal\nHigh\nUrgent"
+  },
+  {
+   "fieldname": "section_break_cwlx",
+   "fieldtype": "Section Break",
+   "label": "Parts used"
+  },
+  {
+   "fieldname": "parts_used",
+   "fieldtype": "Table",
+   "label": "Parts used",
+   "options": "Part Usage Entry"
+  },
+  {
+   "fieldname": "financial_and_delivery_section",
+   "fieldtype": "Section Break",
+   "label": "Financial and delivery"
+  },
+  {
+   "fieldname": "parts_total",
+   "fieldtype": "Currency",
+   "label": "Parts total",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "from Settings",
+   "fieldname": "labour_charge",
+   "fieldtype": "Currency",
+   "label": "Labour charge"
+  },
+  {
+   "fieldname": "final_amountc",
+   "fieldtype": "Currency",
+   "label": "Final amount",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "Unpaid",
+   "fieldname": "payment_status",
+   "fieldtype": "Select",
+   "label": "Payment status ",
+   "options": "Paid\nUnpaid"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "delivery_date",
+   "fieldtype": "Date",
+   "label": "Delivery Date"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nPending Diagnosis\nAwaiting Customer Approval\nIn Repair\nReady for Delivery\nDelivered\nCancelled"
+  },
+  {
+   "fieldname": "customer_and_device_section",
+   "fieldtype": "Section Break",
+   "label": "Customer and device"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-04-28 16:05:24.295948",
+ "modified_by": "kaviyaveerapandi21@gmail.com",
+ "module": "Quickfix",
+ "name": "Job card",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Service Staff",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Technician",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "QF Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
