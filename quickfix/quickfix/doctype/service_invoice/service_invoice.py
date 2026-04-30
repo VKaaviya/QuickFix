@@ -4,17 +4,21 @@
 import frappe
 from frappe.model.document import Document
 
+def has_permission(doc,permtype="read", *,user=None):
+        if doc.flags.ignore_permissions:
+            return True
 
-class ServiceInvoice(Document):
-    def has_permission(self,doc, user):
         if not user:
             user = frappe.session.user
 
         if "QF Manager" in frappe.get_roles(user):
             return True
-        status=frappe.db.get_value("Job Card",self.job_card,"payment_status")
-        if status != "Paid":
-            return False
-        return True
-            
+
+        if permtype == "create":
+            return True
+
+        status = frappe.db.get_value("Job Card", doc.job_card, "payment_status")
+        return status == "Paid"
+class ServiceInvoice(Document):
+    pass
 

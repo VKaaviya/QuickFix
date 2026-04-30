@@ -2,6 +2,8 @@
 
 Management app for electronics repair shop
 
+*For the detailed internal answers and task writeups, see `README_internals.md`.*
+
 ### Installation
 
 You can install this app using the [bench](https://github.com/frappe/bench) CLI:

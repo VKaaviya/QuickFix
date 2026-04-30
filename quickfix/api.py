@@ -18,7 +18,7 @@ def get_job_cards_safe():
 
     # Permission-aware fetch
     job_cards = frappe.get_list(
-        "Job card",
+        "Job Card",
         fields=[
             "name",
             "customer_name",
@@ -39,7 +39,7 @@ def get_job_cards_safe():
 
 @frappe.whitelist()
 def get_overdue_jobs():
-    job_card = frappe.qb.DocType("Job card")
+    job_card = frappe.qb.DocType("Job Card")
     overdue_date = frappe.utils.add_days(frappe.utils.nowdate(), -7)
 
     query = (
@@ -60,7 +60,7 @@ def get_overdue_jobs():
 def transfer_job(from_tech,to_tech):
     try:
         job_card=frappe.db.sql("""
-            UPDATE `tabJob card`
+            UPDATE `tabJob Card`
             SET assigned_technician=%s
             WHERE assigned_technician=%s
         """,(to_tech,from_tech))

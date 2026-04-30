@@ -137,12 +137,13 @@ fixtures=[
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Job card": "quickfix.quickfix.doctype.job_card.job_card.get_permission_query_conditions",
+	"Job Card": "quickfix.quickfix.doctype.job_card.job_card.get_permission_query_conditions",
 }
 #
 has_permission = {
 	"Service Invoice": "quickfix.quickfix.doctype.service_invoice.service_invoice.has_permission",
 }
+
 
 # Document Events
 # ---------------
@@ -186,9 +187,9 @@ has_permission = {
 # ------------------------------
 #
 # Specify custom mixins to extend the standard doctype controller.
-# extend_doctype_class = {
-# 	"Task": "quickfix.custom.task.CustomTaskMixin"
-# }
+extend_doctype_class = {
+    "Job Card": "quickfix.quickfix.overrides.custom_job_card.CustomJobCard"
+}
 
 # Overriding Methods
 # ------------------------------

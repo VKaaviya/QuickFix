@@ -28,7 +28,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Job card",
-   "options": "Job card",
+   "options": "Job Card",
    "reqd": 1,
    "set_only_once": 1
   },
@@ -63,6 +63,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "payment_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -84,7 +85,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-04-27 14:50:34.091301",
+ "modified": "2026-04-29 15:55:55.336928",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Service Invoice",

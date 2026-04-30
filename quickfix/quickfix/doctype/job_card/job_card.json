@@ -39,7 +39,7 @@
    "fieldtype": "Link",
    "label": "Amended From",
    "no_copy": 1,
-   "options": "Job card",
+   "options": "Job Card",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
@@ -183,6 +183,7 @@
    "label": "Remarks"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -199,10 +200,10 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-04-28 16:05:24.295948",
- "modified_by": "kaviyaveerapandi21@gmail.com",
+ "modified": "2026-04-29 13:00:51.506163",
+ "modified_by": "Administrator",
  "module": "Quickfix",
- "name": "Job card",
+ "name": "Job Card",
  "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [

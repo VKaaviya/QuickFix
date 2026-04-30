@@ -21,6 +21,7 @@
    "fieldtype": "Data",
    "in_global_search": 1,
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Part name",
    "reqd": 1
   },
@@ -33,6 +34,7 @@
   {
    "fieldname": "compatible_device_type",
    "fieldtype": "Link",
+   "in_filter": 1,
    "label": "Compatible device type",
    "options": "Device Type"
   },
@@ -70,8 +72,8 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-04-27 13:08:47.834033",
- "modified_by": "Administrator",
+ "modified": "2026-04-29 11:10:24.110675",
+ "modified_by": "kaviyaveerapandi21@gmail.com",
  "module": "Quickfix",
  "name": "Spare part",
  "naming_rule": "Expression",
@@ -124,5 +126,6 @@
  "rows_threshold_for_grid_search": 20,
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": []
+ "states": [],
+ "title_field": "part_name"
 }
