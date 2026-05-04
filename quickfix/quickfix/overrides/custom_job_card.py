@@ -21,14 +21,12 @@ from quickfix.quickfix.doctype.job_card.job_card import JobCard
 class CustomJobCard(JobCard):
     def validate(self):
         super().validate()
-        print("Custom validation logic for Job Card")
         self.check_urgent_unassigned()
 
     def check_urgent_unassigned(self):
 
         if self.priority == "Urgent" and not self.assigned_technician:
             manager = frappe.db.get_value("Quickfix Settings", None, "manager_email")
-            print(manager)
             frappe.enqueue(
                 "quickfix.quickfix.overrides.custom_job_card.send_urgent_notification",
                 job_card=self.name,

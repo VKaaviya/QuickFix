@@ -8,20 +8,21 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 def get_permission_query_conditions(user):
-	print("get_permission_query_conditions called with user:",frappe.get_roles(user))
 
 	if not user:
 		user = frappe.session.user
 	if "QF Technician" in frappe.get_roles(user):
-		print("User is a QF Technician, applying technician-specific permission conditions.")
 		# Get the Technician record for the current user
 		technician = frappe.db.get_value("Technician", {"user": user})
 		if technician:
 			return """(`tabJob Card`.assigned_technician = '{technician}')""".format(technician=technician)
 	return ""
-
+def validate(doc, method):
+	print("validate 2")
 class JobCard(Document):
 	def validate(self):
+		print("validate 1")
+
 		self.validate_customer_phone()
 		self.validate_assigned_technician()
 		self.calculate_parts_total()

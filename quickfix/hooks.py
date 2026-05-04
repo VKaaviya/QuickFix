@@ -96,12 +96,12 @@ fixtures=[
 # ------------
 
 # before_install = "quickfix.install.before_install"
-# after_install = "quickfix.install.after_install"
+after_install = "quickfix.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "quickfix.uninstall.before_uninstall"
+before_uninstall = "quickfix.uninstall.before_uninstall"
 # after_uninstall = "quickfix.uninstall.after_uninstall"
 
 # Integration Setup
@@ -149,13 +149,16 @@ has_permission = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	("Job Card", "Service Invoice", "Spare part", "Quickfix Settings"): {
+		"on_update": "quickfix.quickfix.audit.log_change.logchange",
+		"on_submit": "quickfix.quickfix.audit.log_change.logchange",
+		"on_cancel": "quickfix.quickfix.audit.log_change.logchange",
+	},
+    "Job Card": {
+        "validate":"quickfix.quickfix.doctype.job_card.job_card.validate"
+	}
+}
 
 # Scheduled Tasks
 # ---------------

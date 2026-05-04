@@ -16,3 +16,24 @@ class Sparepart(Document):
 			self.part_code = self.part_code.upper()
 		self.name = make_autoname(self.meta.autoname, doc=self)
 
+	def on_update(self):
+		threshold = frappe.db.get_value(
+			"QuickFix Settings",
+			None,
+			"low_stock_threshold",
+		)
+
+		if threshold is None:
+			return
+
+		try:
+			threshold = int(threshold)
+		except (TypeError, ValueError):
+			return
+
+		if self.stock_qty is not None and self.stock_qty <= threshold:
+			frappe.msgprint(
+				f"Spare part {self.part_code or self.name} is at or below low stock threshold ({threshold}).",
+			)
+
+
