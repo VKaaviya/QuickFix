@@ -64,10 +64,30 @@ def transfer_job(from_tech,to_tech):
             SET assigned_technician=%s
             WHERE assigned_technician=%s
         """,(to_tech,from_tech))
-        frappe.db.commit()
 
     except Exception as e:
-        frappe.db.rollback()
 
         frappe.log_error(title="Job Card Transfer Failed", message=frappe.get_traceback())
         raise
+
+
+@frappe.whitelist()
+def get_counts(doctype, filters=None, debug=False, cache=False):
+    frappe.enqueue(
+        "quickfix.api.create_audit_log",
+        doctype_name = doctype,
+        action       = "count_queried"
+    )
+
+    return frappe.db.count(doctype, filters)
+
+
+def create_audit_log(doctype_name, action):
+    frappe.get_doc({
+        "doctype"      : "Audit Log",
+        "doctype_name" : doctype_name,
+        "action"       : action,
+        "user"         : frappe.session.user,
+        "timestamp"    : frappe.utils.now_datetime()
+    }).insert(ignore_permissions=True)
+    

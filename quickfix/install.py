@@ -29,6 +29,13 @@ def after_install():
             }
         ).insert(ignore_permissions=True)
         settings_created = True
+    frappe.make_property_setter(
+        "Job Card",
+        "remarks",
+        "bold",
+            1,
+        "Check",
+    )
 
     message = "Quickfix setup completed successfully."
     if created_device_types:

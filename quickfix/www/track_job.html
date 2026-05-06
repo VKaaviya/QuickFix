@@ -1,0 +1,22 @@
+
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<h3>Track Your Job</h3>
+
+<form method="get">
+    <input type="text" name="job_id" placeholder="Enter Job ID">
+    <button type="submit">Track</button>
+</form>
+
+{% if job %}
+    <h4>Job Details</h4>
+    <p>Status: {{ job.status }}</p>
+    <p>Customer: {{ job.customer_name }}</p>
+{% endif %}
+
+{% if error %}
+    <p style="color:red;">{{ error }}</p>
+{% endif %}
+
+{% endblock %}

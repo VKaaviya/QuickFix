@@ -9,11 +9,25 @@ app_license = "mit"
 fixtures=[
     {
         "doctype":"Custom DocPerm",
-    }
+    },
+    "Custom Field",
+    "Property Setter",
+    "Role",
+    "Workspace",
+    "Device Type",
+    "Quickfix Settings",
 ]
 
+on_session_creation="quickfix.overrides.log_login"
+on_logout="quickfix.overrides.logout_log"
 
+website_route_rules=[
+    {"from_route":"/track-jobs","to_route":"/track_job"}
+]
 
+portal_menu_items=[
+    {"title":"Track My Job","route":"/track-jobs","role":"Guest"},
+]
 
 # Apps
 # ------------------
@@ -30,6 +44,9 @@ fixtures=[
 # 		"has_permission": "quickfix.api.permission.has_app_permission"
 # 	}
 # ]
+
+#Bootinfo
+extend_bootinfo="quickfix.boot.extend_bootinfo"
 
 # Includes in <head>
 # ------------------
@@ -50,7 +67,7 @@ fixtures=[
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-# page_js = {"page" : "public/js/file.js"}
+# page_js = {"navigation" : "public/js/quickfix.js"}
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
@@ -87,10 +104,10 @@ fixtures=[
 # ----------
 
 # add methods and filters to jinja environment
-# jinja = {
-# 	"methods": "quickfix.utils.jinja_methods",
-# 	"filters": "quickfix.utils.jinja_filters"
-# }
+jinja = {
+	"methods": ["quickfix.utils.utils.get_shop_name"],
+    "filters":["quickfix.utils.utils.format_job_id"]
+}
 
 # Installation
 # ------------
@@ -197,12 +214,12 @@ extend_doctype_class = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "quickfix.event.get_events"
-# }
+override_whitelisted_methods = {
+    "frappe.client.get_count": "quickfix.api.get_counts"
+}
 #
 # each overriding function accepts a `data` argument;
-# generated from the base implementation of the doctype dashboard,
+# generated from the base implementation of the% extends "www/portal.html" %} doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
 # 	"Task": "quickfix.task.get_dashboard_data"

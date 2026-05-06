@@ -128,3 +128,288 @@
 - `on_update()` must not call `self.save()` because that causes recursive saves. Instead, use helper methods such as `recalculate_amounts()`.
 - `autoname()` for `Spare part` should uppercase `part_code` and then use the naming series.
 - `rename_doc(..., merge=False)` is safe for updating links, while `merge=True` is dangerous because it can merge two distinct records and lose data.
+
+## Asset Hooks: app_include_js vs web_include_js
+- app_include_js loads JS only in Desk (logged-in users)
+- web_include_js loads JS only in Website/Portal (guest + public users)
+- Use app_include_js for backend UI customization
+- Use web_include_js for public-facing features and Web Forms
+## DocType UI Customization: doctype_js & doctype_list_js (Job Card)
+-  doctype_js customizes form view behavior (validation, field logic, actions)
+- doctype_list_js customizes list view (indicators, filters, list actions)
+- Both used to enhance Job Card usability in Desk
+## Tree View Concept: doctype_tree_js
+- Not applicable for current DocTypes
+- Used for hierarchical data structures (parent-child relationship)
+- Example DocTypes: Account, Warehouse, Item Group
+- Helps visualize nested data in tree format
+## Build Process & Cache Busting
+- bench build --app quickfix bundles and prepares JS/CSS assets
+- Generates versioned (hashed) files to avoid browser caching issues
+- Ensures latest frontend changes are loaded after updates
+- Prevents stale UI caused by cached old assets
+
+## Jinja Context: Print Formats vs Web Pages
+# Print Format Context
+Automatically receives:
+doc (current document)
+meta, frappe, and other system variables
+Strongly tied to a specific DocType record
+Used for generating PDFs/print views
+# Web Page Context
+Does NOT automatically include doc
+Data must be:
+Passed manually from backend
+Or fetched using Jinja methods / APIs
+Used for public-facing pages
+# Quickfix Internals — Override Strategies
+
+## override_whitelisted_methods vs Monkey Patching
+
+### override_whitelisted_methods (Hook-based)
+
+```python
+# hooks.py
+override_whitelisted_methods = {
+    "frappe.client.get_count": "quickfix.quickfix.overrides.get_counts"
+}
+```
+
+**Characteristics:**
+- Declared explicitly in hooks.py
+- Frappe manages the swap at startup
+- Reversible — uninstalling app restores original
+- Visible — anyone reading hooks.py knows about it
+- Safe — only affects whitelisted API endpoints
+- Follows Frappe's intended extension pattern
+
+**When to use:**
+- Overriding API endpoints called from browser
+- Adding logging/audit to existing Frappe APIs
+- Extending standard Frappe behavior in your app
+- When you need clean, maintainable customization
+
+---
+
+### Monkey Patching (Import-time)
+
+```python
+# somewhere in your app startup
+import frappe.client
+frappe.client.get_count = my_custom_function
+```
+
+**Characteristics:**
+- Happens at import time — affects entire process
+- Invisible — no central place to see all patches
+- Brittle — breaks if Frappe changes internals
+- Irreversible — original gone for entire process
+- Dangerous — affects ALL apps in same bench
+- Hard to debug — no trace of the swap
+
+**When to use:**
+- Almost never in production
+- Only for emergency hotfixes
+- Only in isolated test environments
+- Never in shared multi-app benches
+
+---
+
+### Side by Side Comparison
+
+| Aspect | override_whitelisted_methods | Monkey Patching |
+|---|---|---|
+| Visibility | Explicit in hooks.py | Hidden at import |
+| Reversible | Yes — uninstall app | No — process-wide |
+| Scope | API endpoint only | Entire process |
+| Safety | High | Low |
+| Debuggability | Easy | Very Hard |
+| Frappe support | Official | Unofficial |
+| Multi-app safe | Yes | Dangerous |
+
+---
+
+## What Happens if TWO Apps Both Register Same Method
+
+```python
+# App A hooks.py
+override_whitelisted_methods = {
+    "frappe.client.get_count": "app_a.overrides.get_count"
+}
+
+# App B hooks.py
+override_whitelisted_methods = {
+    "frappe.client.get_count": "app_b.overrides.get_count"
+}
+```
+
+### What Frappe Does:
+
+Frappe processes hooks in **app installation order**.
+The LAST registered override WINS and replaces all previous ones.
+
+```
+Frappe starts
+      │
+      ▼
+Loads App A hooks → registers app_a.overrides.get_count
+      │
+      ▼
+Loads App B hooks → registers app_b.overrides.get_count
+      │             OVERWRITES App A's override
+      ▼
+Final result: only App B's override is active
+App A's override is SILENTLY IGNORED ❌
+```
+
+### Consequences:
+- App A's audit logging stops working silently
+- No error or warning is thrown
+- Very hard to debug
+- App A developer has no idea their override was replaced
+
+### Solution — Chain the Overrides:
+
+```python
+# App B should call App A's override
+# not the original function
+
+import frappe
+from app_a.overrides import get_count as app_a_get_count
+
+def get_count(doctype, filters=None, debug=False, cache=False):
+    # call App A's override first
+    result = app_a_get_count(
+        doctype,
+        filters = filters,
+        debug   = debug,
+        cache   = cache
+    )
+    # then do App B's logic
+    my_extra_logic()
+    return result
+```
+
+---
+
+## Signature Mismatch — TypeError Explained
+
+### What is Signature Mismatch
+
+When your override function does NOT have
+the same parameters as the original function.
+
+### Original signature:
+```python
+# frappe/client.py
+def get_count(doctype, filters=None, debug=False, cache=False):
+    pass
+```
+
+### Mismatch examples and when TypeError occurs:
+
+#### Case 1 — Missing Parameter
+```python
+# your override — missing cache parameter
+def get_counts(doctype, filters=None, debug=False):
+    pass
+
+# caller does this
+get_count("Customer", filters=None, debug=False, cache=True)
+#                                                ↑
+# TypeError: get_counts() got unexpected keyword argument 'cache'
+```
+
+#### Case 2 — Wrong Parameter Name
+```python
+# your override — wrong name
+def get_counts(doctype, filter=None, debug=False, cache=False):
+    #                   ↑ should be filters not filter
+    pass
+
+# caller does this
+get_count("Customer", filters={"status": "Active"})
+#                     ↑
+# TypeError: get_counts() got unexpected keyword argument 'filters'
+```
+
+#### Case 3 — Extra Required Parameter
+```python
+# your override — added required param with no default
+def get_counts(doctype, filters=None, debug=False, cache=False, user):
+    #                                                            ↑
+    # required param — no default value
+    pass
+
+# caller does this
+get_count("Customer")
+# TypeError: get_counts() missing required argument 'user'
+```
+
+#### Case 4 — Wrong Argument Order
+```python
+# your override — wrong order
+def get_counts(filters=None, doctype, debug=False, cache=False):
+    #           ↑ default before non-default
+    pass
+
+# SyntaxError at definition time — not even TypeError
+# SyntaxError: non-default argument follows default argument
+```
+
+### When You Get TypeError Summary:
+
+```
+Situation                              Error
+──────────────────────────────────────────────────────
+Missing parameter in override          TypeError: unexpected keyword argument
+Wrong parameter name                   TypeError: unexpected keyword argument
+Extra required parameter               TypeError: missing required argument
+Caller passes positional args          TypeError: takes N positional arguments
+  but override expects keyword only
+```
+
+### Safe Pattern — Always Match Exactly:
+
+```python
+# Step 1 — check original signature
+import inspect
+from frappe.client import get_count
+print(inspect.signature(get_count))
+# (doctype, filters=None, debug=False, cache=False)
+
+# Step 2 — match it exactly in your override
+def get_counts(doctype, filters=None, debug=False, cache=False):
+    #          ↑ exact same params, exact same defaults
+    pass
+
+# Step 3 — or use **kwargs as safety net
+def get_counts(doctype, filters=None, debug=False, cache=False, **kwargs):
+    #                                                            ↑ catches
+    #                                                 any extra future params
+    pass
+```
+
+## Fieldname Collision:
+──────────────────────────────────────────
+- Risk    : your field name = future Frappe field
+- Result  : migration crash / data corruption /
+          silent overwrite
+- Fix     : always prefix fieldnames with app name
+          qf_status not status
+          qf_priority not priority
+
+## Patching Order:
+──────────────────────────────────────────
+- Never merge patch1 (create field) +
+       patch2 (read field) into one patch
+
+- Because:
+  insert Custom Field ≠ column in DB
+  column only added during bench migrate
+  which runs BETWEEN separate patch entries
+
+- Separate patches guarantee:
+  patch1 → creates Custom Field record
+  migrate → adds actual DB column
+  patch2 → safely reads that column 
