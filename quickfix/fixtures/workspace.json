@@ -936,7 +936,6 @@
   "title": "Build",
   "type": "Workspace"
  },
- 
  {
   "app": "frappe",
   "charts": [

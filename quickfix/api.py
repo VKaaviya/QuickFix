@@ -78,3 +78,22 @@ def create_audit_log(doctype_name, action):
         "user"         : frappe.session.user,
         "timestamp"    : frappe.utils.now_datetime()
     }).insert(ignore_permissions=True)
+
+@frappe.whitelist()
+def get_status_chart_data():
+
+    data = frappe.db.sql("""
+        SELECT status, COUNT(*) as count
+        FROM `tabJob Card`
+        GROUP BY status
+    """, as_dict=True)
+
+    return {
+        "labels": [d.status for d in data],
+        "datasets": [
+            {
+                "name": "Jobs",
+                "values": [d.count for d in data]
+            }
+        ]
+    }
