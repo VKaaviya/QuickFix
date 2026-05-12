@@ -1,0 +1,40 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [],
+ "creation": "2026-05-08 18:00:08.783178",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "default": "Laptop",
+   "fieldname": "device_type",
+   "fieldtype": "Link",
+   "label": "Device Type",
+   "mandatory": 0,
+   "options": "Device Type",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2026-05-11 12:19:11.089867",
+ "modified_by": "Administrator",
+ "module": "Quickfix",
+ "name": "Job_Card_Report",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "SELECT\n    name,\n    customer_name,\n    device_type,\n    status,\n    assigned_technician,\n    estimate_cost,\n    creation\nFROM\n    `tabJob Card`\nWHERE\n    status NOT IN ('Delivered', 'Cancelled') AND\n    (%(device_type)s IS NULL OR device_type = %(device_type)s)\nORDER BY\n    creation DESC",
+ "ref_doctype": "Job Card",
+ "reference_report": "",
+ "report_name": "Job_Card_Report",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Administrator"
+  }
+ ],
+ "timeout": 0
+}

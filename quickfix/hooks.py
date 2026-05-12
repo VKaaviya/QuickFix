@@ -70,7 +70,7 @@ extend_bootinfo="quickfix.boot.extend_bootinfo"
 # page_js = {"navigation" : "public/js/quickfix.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Job Card" : "public/js/job_card.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -113,7 +113,7 @@ jinja = {
 # ------------
 
 # before_install = "quickfix.install.before_install"
-after_install = "quickfix.install.after_install"
+after_install =["quickfix.install.after_install"]
 
 # Uninstallation
 # ------------
@@ -172,9 +172,7 @@ doc_events = {
 		"on_submit": "quickfix.quickfix.audit.log_change.logchange",
 		"on_cancel": "quickfix.quickfix.audit.log_change.logchange",
 	},
-    "Job Card": {
-        "validate":"quickfix.quickfix.doctype.job_card.job_card.validate"
-	}
+    
 }
 
 # Scheduled Tasks

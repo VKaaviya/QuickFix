@@ -125,6 +125,7 @@
    "default": "Normal",
    "fieldname": "priority",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "priority",
    "options": "Normal\nHigh\nUrgent"
   },
@@ -160,6 +161,7 @@
   {
    "fieldname": "final_amountc",
    "fieldtype": "Currency",
+   "in_list_view": 1,
    "label": "Final amount",
    "read_only": 1
   },
@@ -188,7 +190,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Status",
-   "options": "Draft\nPending Diagnosis\nAwaiting Customer Approval\nIn Repair\nReady for Delivery\nDelivered\nCancelled"
+   "options": "Draft\nPending Diagnosis\nAwaiting Customer Approval\nIn Repair\nReady for Delivery\nDelivered\nCancelled",
+   "search_index": 1
   },
   {
    "fieldname": "customer_and_device_section",
@@ -200,7 +203,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-06 10:44:52.426855",
+ "modified": "2026-05-11 16:06:43.504376",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Job Card",
@@ -208,14 +211,18 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
    "export": 1,
+   "mask": 1,
    "print": 1,
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1
@@ -253,6 +260,7 @@
    "read": 1,
    "report": 1,
    "role": "QF Manager",
+   "select": 1,
    "share": 1,
    "submit": 1,
    "write": 1

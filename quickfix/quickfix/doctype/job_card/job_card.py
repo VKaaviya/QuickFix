@@ -17,11 +17,68 @@ def get_permission_query_conditions(user):
 		if technician:
 			return """(`tabJob Card`.assigned_technician = '{technician}')""".format(technician=technician)
 	return ""
+
+@frappe.whitelist()
+def transfer_technician(job_card_name, new_technician):
+
+    doc = frappe.get_doc("Job Card", job_card_name)
+
+    old_technician           = doc.assigned_technician
+    doc.assigned_technician  = new_technician
+    doc.save(ignore_permissions=True)
+
+    tech_user = frappe.get_value(
+        "Technician",
+        new_technician,
+        "user"
+    )
+
+    if tech_user:
+        frappe.get_doc({
+            "doctype"       : "Notification Log",
+            "subject"       : f"Job Card {doc.name} transferred to you",
+            "email_content" : f"Transferred from {old_technician}",
+            "type"          : "Alert",
+            "document_type" : "Job Card",
+            "document_name" : doc.name,
+            "from_user"     : frappe.session.user,
+            "for_user"      : tech_user
+        }).insert(ignore_permissions=True)
+
+    return "transferred"
+
+@frappe.whitelist()
+def reject_job_card(job_card_name, rejection_reason, notify_customer=0):
+
+    doc = frappe.get_doc("Job Card", job_card_name)
+
+    doc.status           = "Cancelled"
+    doc.rejection_reason = rejection_reason
+    doc.save(ignore_permissions=True)
+
+    if int(notify_customer) and doc.customer_email:
+        frappe.enqueue(
+            "frappe.email.sendmail",
+            recipients = [doc.customer_email],
+            subject    = f"Job Card {doc.name} Rejected",
+            message    = f"""
+                <p>Dear {doc.customer_name},</p>
+                <p>Your job card <b>{doc.name}</b>
+                   has been rejected.</p>
+                <p>Reason: {rejection_reason}</p>
+            """,
+            now = True
+        )
+    return "rejected"
+
+
+
+
 def validate(doc, method):
 	print("validate 2")
 class JobCard(Document):
 	def validate(self):
-		print("validate 1")
+		# print("validate 1")
 
 		self.validate_customer_phone()
 		self.validate_assigned_technician()
@@ -160,23 +217,23 @@ class JobCard(Document):
 		self.final_amountc = flt(self.parts_total) + flt(self.labour_charge)
 
 
-def send_job_ready_email(job_card_name):
-	job_card = frappe.get_doc("Job Card", job_card_name)
-	if not job_card.customer_email:
-		return
+	def send_job_ready_email(job_card_name):
+		job_card = frappe.get_doc("Job Card", job_card_name)
+		if not job_card.customer_email:
+			return
 
-	frappe.sendmail(
-		recipients=[job_card.customer_email],
-		subject=f"Your repair job {job_card.name} is ready",
-		message=(
-			f"Hello {job_card.customer_name},\n\n"
-			f"Your job card {job_card.name} is ready for pickup.\n"
-			f"Total amount due: {job_card.final_amountc}.\n\n"
-			"Thank you for choosing Quickfix."
-		),
-		reference_doctype="Job Card",
-		reference_name=job_card.name,
-		now=True,
-	)
+		frappe.sendmail(
+			recipients=[job_card.customer_email],
+			subject=f"Your repair job {job_card.name} is ready",
+			message=(
+				f"Hello {job_card.customer_name},\n\n"
+				f"Your job card {job_card.name} is ready for pickup.\n"
+				f"Total amount due: {job_card.final_amountc}.\n\n"
+				"Thank you for choosing Quickfix."
+			),
+			reference_doctype="Job Card",
+			reference_name=job_card.name,
+			now=True,
+		)
 
 

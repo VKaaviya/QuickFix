@@ -56,19 +56,7 @@ def get_overdue_jobs():
 
     return query.run(as_dict=True)
 
-@frappe.whitelist()
-def transfer_job(from_tech,to_tech):
-    try:
-        job_card=frappe.db.sql("""
-            UPDATE `tabJob Card`
-            SET assigned_technician=%s
-            WHERE assigned_technician=%s
-        """,(to_tech,from_tech))
 
-    except Exception as e:
-
-        frappe.log_error(title="Job Card Transfer Failed", message=frappe.get_traceback())
-        raise
 
 
 @frappe.whitelist()
@@ -90,4 +78,3 @@ def create_audit_log(doctype_name, action):
         "user"         : frappe.session.user,
         "timestamp"    : frappe.utils.now_datetime()
     }).insert(ignore_permissions=True)
-    

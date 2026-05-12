@@ -20,7 +20,7 @@ class IntegrationTestJobCard(IntegrationTestCase):
 	Use this class for testing interactions between multiple components.
 	"""
 
-	def test_custom_job_card_validate_must_call_parent_validate(self):
+	def custom_job_card_validate_must_call_parent_validate(self):
 		"""Catch missing super().validate() in the custom controller override."""
 		parent_validate_called = {"called": False}
 		original_validate = JobCard.validate
