@@ -13,8 +13,8 @@ def patch_get_url():
     if hasattr(fu, "_qf_patched"):
         return # guard: do not patch twice
     _orig = fu.get_url
-    def _custom_get_url(path=None, full_address=False):
-        url = _orig(path, full_address)
+    def _custom_get_url(path=None, full_address=False,allow_header_override=False):
+        url = _orig(path, full_address, allow_header_override)
         prefix = frappe.conf.get("custom_url_prefix", "")
         return prefix + url if prefix else url
     fu.get_url = _custom_get_url
