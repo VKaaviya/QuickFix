@@ -27,11 +27,11 @@ class CustomJobCard(JobCard):
 
         if self.priority == "Urgent" and not self.assigned_technician:
             manager = frappe.db.get_value("Quickfix Settings", None, "manager_email")
-            frappe.enqueue(
-                "quickfix.quickfix.overrides.custom_job_card.send_urgent_notification",
-                job_card=self.name,
-                manager=manager,
-            )
+            # frappe.enqueue(
+            #     "quickfix.quickfix.overrides.custom_job_card.send_urgent_notification",
+            #     job_card=self.name,
+            #     manager=manager,
+            # )
 
 def send_urgent_notification(job_card, manager):
     job_card_url = frappe.utils.get_url_to_form("Job Card", job_card)

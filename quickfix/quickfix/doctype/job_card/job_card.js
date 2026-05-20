@@ -3,7 +3,7 @@
 let show_reject_dialog = function (frm) {
 
     const dialog = new frappe.ui.Dialog({
-        title : "Reject Job Card",
+        title : __("Reject Job Card"),
         size  : "small",
         fields: [
             {
@@ -20,7 +20,7 @@ let show_reject_dialog = function (frm) {
                 default   : 1
             }
         ],
-        primary_action_label: "Confirm Reject",
+        primary_action_label: __("Confirm Reject"),
         primary_action(values) {
             frappe.call({
                 method  : "quickfix.quickfix.doctype.job_card.job_card.reject_job_card",
@@ -30,11 +30,11 @@ let show_reject_dialog = function (frm) {
                     notify_customer  : values.notify_customer
                 },
                 freeze         : true,
-                freeze_message : "Rejecting job card...",
+                freeze_message : __("Rejecting job card..."),
                 callback(r) {
                     if (!r.exc) {
                         frappe.show_alert({
-                            message  : "Job Card rejected successfully.",
+                            message  : __("Job Card rejected successfully."),
                             indicator: "red"
                         }, 4);
                         dialog.hide();
@@ -109,8 +109,8 @@ let transfer_technician = function (frm) {
                 }
             );
         },
-        "Transfer Technician",
-        "Proceed"
+        __("Transfer Technician"),
+        __("Proceed")
     );
 };
 
@@ -130,16 +130,25 @@ frappe.ui.form.on("Job Card", {
     },
 
     onload(frm) {
-        
-        frappe.realtime.on("job_ready", (data) => {
-            if (data.job_card === frm.doc.name) {
-                frappe.show_alert({
-                    message  : __("Job is Ready for Delivery"),
-                    indicator: "green"
-                });
-            }
-        });
-    },
+
+    if (frm.job_ready_listener_added) {
+        return;
+    }
+
+    frm.job_ready_listener_added = true;
+
+    frappe.realtime.on("job_ready", (data) => {
+
+        if (data.job_card === frm.doc.name) {
+
+            frappe.show_alert({
+                message: __("Job is Ready for Delivery"),
+                indicator: "green"
+            });
+
+        }
+    });
+},
 
     refresh(frm) {
 

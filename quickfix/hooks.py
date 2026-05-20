@@ -26,7 +26,7 @@ website_route_rules=[
 ]
 
 portal_menu_items=[
-    {"title":"Track My Job","route":"/track-jobs","role":"Guest"},
+    {"title":"Track My Job","route":"/track-jobs","role":"All"},
 ]
 
 # Apps
@@ -105,7 +105,7 @@ doctype_js = {"Job Card" : "public/js/job_card.js"}
 
 # add methods and filters to jinja environment
 jinja = {
-	"methods": ["quickfix.utils.utils.get_shop_name"],
+	"methods": ["quickfix.utils.utils.get_shop_name","quickfix.utils.utils.get_qr_code"],
     "filters":["quickfix.utils.utils.format_job_id"]
 }
 
@@ -167,24 +167,30 @@ has_permission = {
 # Hook on document methods and events
 
 doc_events = {
-	("Job Card", "Service Invoice", "Spare part", "Quickfix Settings"): {
+	( "Job Card", "Service Invoice", "Spare part", "Quickfix Settings"): {
 		"on_update": "quickfix.quickfix.audit.log_change.logchange",
-		"on_submit": "quickfix.quickfix.audit.log_change.logchange",
+		"on_submit": ["quickfix.quickfix.audit.log_change.logchange"],
 		"on_cancel": "quickfix.quickfix.audit.log_change.logchange",
 	},
+    "Job Card":{
+        "on_update": "quickfix.chache_method.clear_status_chart_data",
+		"on_submit": "quickfix.webhooks.job_card_submitted",
+        "on_update_after_submit": "quickfix.chache_method.clear_status_chart_data",
+        
+    }
     
 }
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"quickfix.tasks.all"
 # 	],
-# 	"daily": [
-# 		"quickfix.tasks.daily"
-# 	],
+	"daily": [
+		"quickfix.scheduled_jobs.check_low_stock"
+	],
 # 	"hourly": [
 # 		"quickfix.tasks.hourly"
 # 	],
@@ -194,7 +200,12 @@ doc_events = {
 # 	"monthly": [
 # 		"quickfix.tasks.monthly"
 # 	],
-# }
+    "cron": {
+    "0 1 2 * *": [
+    "quickfix.api.generate_monthly_revenue_report"
+    ]
+    }
+}
 
 # Testing
 # -------

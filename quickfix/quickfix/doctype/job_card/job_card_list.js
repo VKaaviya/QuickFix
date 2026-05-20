@@ -2,6 +2,105 @@ frappe.listview_settings["Job Card"] = {
 
     add_fields:['final_amountc','priority'],
     has_indicator_for_draft: true,
+    onload(listview) {
+
+        listview.page.add_inner_button(
+            __("Generate Monthly Revenue Report"),
+
+            () => {
+
+                frappe.prompt(
+                    [
+                        {
+                            label: __("Year"),
+                            fieldname: "year",
+                            fieldtype: "Int",
+                            reqd: 1,
+                            default: new Date().getFullYear()
+                        }
+                    ],
+
+                    (values) => {
+
+                        frappe.call({
+
+                            method:
+                                "quickfix.api.generate_monthly_revenue_report",
+
+                            args: {
+                                year: values.year
+                            },
+
+                            freeze: true,
+
+                            freeze_message:
+                                __("Generating Revenue Report..."),
+
+                           callback(r) {
+
+                                    if (!r.exc) {
+
+                                        let labels = [];
+                                        let values = [];
+
+                                        r.message.forEach(row => {
+
+                                            labels.push(`Month ${row.month}`);
+
+                                            values.push(row.revenue);
+                                        });
+
+                                        frappe.msgprint({
+
+                                            title: __("Monthly Revenue Report"),
+
+                                            message: `
+                                                <div id="monthly-revenue-chart"></div>
+                                            `,
+
+                                            wide: true
+                                        });
+
+                                        setTimeout(() => {
+
+                                            new frappe.Chart(
+                                                "#monthly-revenue-chart",
+
+                                                {
+                                                    title: "Monthly Revenue",
+
+                                                    data: {
+
+                                                        labels: labels,
+
+                                                        datasets: [
+                                                            {
+                                                                name: "Revenue",
+
+                                                                values: values
+                                                            }
+                                                        ]
+                                                    },
+
+                                                    type: "bar",
+
+                                                    height: 300
+                                                }
+                                            );
+
+                                        }, 300);
+                                    }
+                                }
+                        });
+                    },
+
+                    __("Generate Report"),
+
+                    __("Generate")
+                );
+            }
+        );
+    },
 
     get_indicator (doc){
         if(doc.status ==="Draft"){

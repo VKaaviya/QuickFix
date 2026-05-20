@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import re
-
+import requests
 import frappe
 from frappe.model.document import Document
 from frappe.utils import flt
@@ -12,29 +12,26 @@ def get_permission_query_conditions(user):
 	if not user:
 		user = frappe.session.user
 	if "QF Technician" in frappe.get_roles(user):
-		# Get the Technician record for the current user
 		technician = frappe.db.get_value("Technician", {"user": user})
 		if technician:
-			return """(`tabJob Card`.assigned_technician = '{technician}')""".format(technician=technician)
+			technician=frappe.db.escape(technician)
+			return f"""(`tabJob Card`.assigned_technician = '{technician}')"""
 	return ""
 
 @frappe.whitelist()
 def transfer_technician(job_card_name, new_technician):
-
     doc = frappe.get_doc("Job Card", job_card_name)
+    if not frappe.has_permission("Job Card", "write", job_card_name):
+        frappe.throw("Not permitted")
 
-    old_technician           = doc.assigned_technician
-    doc.assigned_technician  = new_technician
+    old_technician = doc.assigned_technician
+    doc.assigned_technician = new_technician
     doc.save(ignore_permissions=True)
 
-    tech_user = frappe.get_value(
-        "Technician",
-        new_technician,
-        "user"
-    )
+    tech_user = frappe.get_value("Technician",new_technician,"user")
 
     if tech_user:
-        frappe.get_doc({
+        frappe.new_doc("Notification Log").update({
             "doctype"       : "Notification Log",
             "subject"       : f"Job Card {doc.name} transferred to you",
             "email_content" : f"Transferred from {old_technician}",
@@ -50,7 +47,7 @@ def transfer_technician(job_card_name, new_technician):
 @frappe.whitelist()
 def reject_job_card(job_card_name, rejection_reason, notify_customer=0):
 
-    doc = frappe.get_doc("Job Card", job_card_name)
+    doc = frappe.get_doc ("Job Card", job_card_name)
 
     doc.status           = "Cancelled"
     doc.rejection_reason = rejection_reason
@@ -78,18 +75,20 @@ def validate(doc, method):
 	print("validate 2")
 class JobCard(Document):
 	def validate(self):
-		# print("validate 1")
 
 		self.validate_customer_phone()
 		self.validate_assigned_technician()
+		self.validate_part_quantities()
 		self.calculate_parts_total()
 		self.set_labour_charge()
 		self.set_final_amount()
+		
 
 	def before_submit(self):
-		if self.status != "Ready for Delivery":
-			frappe.throw("Job card can only be submitted when status is 'Ready for Delivery'.")
+		if self.status not in ["Ready for Delivery", "Delivered"]:
+			frappe.throw(frappe._("Job card can only be submitted when status is 'Ready for Delivery' or 'Delivered'."))
 		self.checks_parts_availability()
+		self.check_estimate_cost()
 
 	def on_submit(self):
 		self.deduct_part_stock()
@@ -130,11 +129,10 @@ class JobCard(Document):
 	# 		frappe.throw(
 	# 			"Job Card can only be deleted when it is Draft or Cancelled."
 	# 		)
+	def before_print(self,settings=None):
+		self.print_summary=f"Job Card {self.name} for {self.customer_name}"
 
 	def on_update(self):
-		# on_update is triggered by save(). Calling self.save() here would re-enter
-		# on_update and create a recursion loop. Instead, keep update-side effects
-		# in helper methods that are called once per save operation
 		self.recalculate_amounts()
 
 	def on_update_after_submit(self):
@@ -152,9 +150,6 @@ class JobCard(Document):
 			for part in self.parts_used:
 				stock_quantity = flt(frappe.db.get_value("Spare part", part.part, "stock_qty"))
 				new_quantity = stock_quantity - flt(part.quandity)
-				# This deduction is part of an internal submit workflow, not a direct user edit of Spare part.
-				# ignore_permissions=True is acceptable because the Job Card submit process has already
-				# validated the operation and this update reflects trusted system behavior.
 				frappe.db.set_value(
 					"Spare part",
 					part.part,
@@ -163,6 +158,8 @@ class JobCard(Document):
 				)
 
 	def create_service_invoice(self):
+		if frappe.get_value("Service Invoice", {"job_card": self.name,"docstatus": 1}):
+			return
 		invoice = frappe.get_doc(
 			{
 				"doctype": "Service Invoice",
@@ -177,15 +174,19 @@ class JobCard(Document):
 			}
 		)
 		invoice.insert(ignore_permissions=True)
+	def validate_part_quantities(self):
+		if self.parts_used:
+			for row in self.parts_used:
+				if flt(row.quandity) <= 0:
+					frappe.throw(f"Quantity must be greater than zero for part {row.part}")
+					
 
 	def checks_parts_availability(self):
 		if self.parts_used:
 			for part in self.parts_used:
 				stk_qty = frappe.db.get_value("Spare part", part.part, "stock_qty")
 				if flt(stk_qty) < flt(part.quandity):
-					frappe.throw(
-						f"Not enough stock for part {part.part_name}. Available: {stk_qty}, Required: {part.quandity}"
-					)
+					frappe.throw(f"Not enough stock for part {part.part_name}. Available: {stk_qty}, Required: {part.quandity}")
 
 	def validate_customer_phone(self):
 		if self.customer_phone:
@@ -196,9 +197,8 @@ class JobCard(Document):
 
 	def validate_assigned_technician(self):
 		if self.status in ["In Repair", "Ready for Delivery", "Delivered"] and not self.assigned_technician:
-			frappe.throw(
-				"Assigned technician is required when status is In Repair, Ready for Delivery, or Delivered."
-			)
+			frappe.throw("Assigned technician is required when status is In Repair, Ready for Delivery, or Delivered.")
+			
 
 	def calculate_parts_total(self):
 		parts_total = 0.0
@@ -215,25 +215,37 @@ class JobCard(Document):
 
 	def set_final_amount(self):
 		self.final_amountc = flt(self.parts_total) + flt(self.labour_charge)
+	
+	def check_estimate_cost(self):
+		if self.status == "In Repair" and self.estimate_cost ==0:
+			frappe.throw("Estimated cost must be provided when status is In Repair.")
 
 
-	def send_job_ready_email(job_card_name):
-		job_card = frappe.get_doc("Job Card", job_card_name)
-		if not job_card.customer_email:
-			return
 
-		frappe.sendmail(
-			recipients=[job_card.customer_email],
-			subject=f"Your repair job {job_card.name} is ready",
-			message=(
-				f"Hello {job_card.customer_name},\n\n"
-				f"Your job card {job_card.name} is ready for pickup.\n"
-				f"Total amount due: {job_card.final_amountc}.\n\n"
-				"Thank you for choosing Quickfix."
-			),
-			reference_doctype="Job Card",
-			reference_name=job_card.name,
-			now=True,
-		)
+def send_job_ready_email(job_card_name):
+	job_card = frappe.get_doc("Job Card", job_card_name)
+	if not job_card.customer_email:
+		return
 
+	frappe.sendmail(
+		recipients=[job_card.customer_email],
+		subject=f"Your repair job {job_card.name} is ready",
+		message=(
+			f"Hello {job_card.customer_name},\n\n"
+			f"Your job card {job_card.name} is ready for pickup.\n"
+			f"Total amount due: {job_card.final_amountc}.\n\n"
+			"Thank you for choosing Quickfix."
+		),
+		reference_doctype="Job Card",
+		reference_name=job_card.name,
+		now=True,
+		attachments= [
+					frappe.attach_print(
+					doctype="Job Card",
+					name=job_card.name,
+					print_format="Job Card Receipt",
+					file_name=f"{job_card.name}.pdf"
+				)
+		]
+	)
 

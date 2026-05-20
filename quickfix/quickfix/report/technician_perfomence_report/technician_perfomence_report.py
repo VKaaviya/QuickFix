@@ -8,7 +8,7 @@ from collections import defaultdict
 
 def execute(filters=None):
 
-    columns = get_columns()
+    columns = getcolumns()
     data = get_data(filters)
 
     chart = get_chart(data)
@@ -18,7 +18,7 @@ def execute(filters=None):
     return columns, data, None, chart, report_summary
 
 
-def get_columns():
+def getcolumns():
 
     columns = [
         {

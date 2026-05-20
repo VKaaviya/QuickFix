@@ -27,10 +27,40 @@
 - If the token is omitted or incorrect during a state-changing request, Frappe rejects the request with a CSRF validation error.
 - In bench console, `import frappe; frappe.session.data` usually returns `{}` because that interactive session is not attached to a real browser session. It only contains extra session values when a web session is initialized.
 
+### Authentication Methods: Session Cookies vs. Tokens
+
+#### Session Cookie Authentication
+- **How it works**: The server creates a session on login and stores session data (user ID, permissions, etc.) server-side. A session ID is sent to the client as an HTTP cookie. Subsequent requests include this cookie, allowing the server to look up the session data.
+- **State**: Stateful - the server maintains session state.
+- **Storage**: Session data stored on server (often in Redis or database), client stores only the session ID cookie.
+- **Expiration**: Typically expires when the browser closes or after a timeout period.
+- **Security**: Relies on secure cookie attributes (HttpOnly, Secure, SameSite) and CSRF protection for state-changing requests.
+
+#### Token Authentication (e.g., JWT, API Tokens)
+- **How it works**: On login, the server issues a signed token containing user claims (ID, permissions, expiration). The client stores this token and sends it in request headers (usually `Authorization: Bearer <token>`). The server validates the token's signature and claims without storing session state.
+- **State**: Stateless - all user information is encoded in the token.
+- **Storage**: Token stored client-side (localStorage, sessionStorage, or secure storage), server doesn't store session data.
+- **Expiration**: Token has built-in expiration, can be refreshed.
+- **Security**: Token must be protected from theft; no automatic CSRF protection needed for stateless APIs.
+
+#### Browser Use vs. Server-to-Server
+- **Browser Use**: Session cookie authentication is more appropriate. Browsers automatically handle cookie sending with requests, and Frappe's CSRF protection works seamlessly with session-based auth. Cookies integrate well with browser security features and user experience (automatic login persistence).
+- **Server-to-Server**: Token authentication is more appropriate. Tokens are self-contained and easier to manage in programmatic clients. No cookie handling needed, better for microservices, mobile apps, or third-party integrations where maintaining server-side session state is impractical.
+
 ### Error Visibility & Developer Mode
 - With `developer_mode: 1`, Frappe returns full Python tracebacks and debugging details in the browser for exceptions in whitelisted methods.
 - With `developer_mode: 0`, Frappe hides internal details and returns a generic error response so sensitive implementation data is not exposed.
 - In production, hidden errors are logged to Frappe's error logging system, typically via `frappe.log_error` and into the site's error log / `error_log` table.
+
+### Redis Cache
+- `bootinfo` data for the current user and site settings
+- DocType metadata / `meta` definitions
+- website context and route/page settings
+- translations for labels and messages
+- user permissions and role access rules
+
+### Stale UI Risk
+If a dashboard chart caches query results and a Job Card status changes, the chart can keep showing old counts until the cache is invalidated. For example, after a Job Card switches from `In Repair` to `Completed`, a status-based summary chart may still display the previous `In Repair` total.
 
 ### Permission Checks
 
@@ -55,6 +85,36 @@
 ### Query Builder & ORM
 - The app already implements `get_overdue_jobs()` in `quickfix/api.py` using `frappe.qb.DocType("Job Card")`.
 - It selects `name`, `customer_name`, `assigned_technician`, `creation`, filters `status` in (`Pending Diagnosis`, `In Repair`), and `creation < now - 7 days`, then orders by creation ascending.
+
+### Query patterns
+- f-string:
+```python
+frappe.db.sql(f"SELECT * FROM `tabJob Card` WHERE customer_phone = '{phone}'")
+```
+- parameterized:
+```python
+frappe.db.sql(
+    "SELECT * FROM `tabJob Card` WHERE customer_phone = %(phone)s",
+    {"phone": phone},
+)
+```
+- another pattern:
+```python
+frappe.db.sql(
+    "SELECT * FROM `tabJob Card` WHERE status LIKE %(status)s",
+    {"status": status + "%"},
+)
+```
+- `frappe.db.escape(value)` exists, but parameterized queries are safer and preferred.
+
+### Search Indexes & Over-Indexing
+- Do not add a search index to every field by default. Indexes are useful only when a field is commonly used in filters, joins, sorting, unique checks, or lookups.
+- Every index is an extra database structure that must be maintained whenever rows are inserted, updated, or deleted.
+- Over-indexing makes writes slower because the database has to update the table data plus all matching indexes.
+- It increases disk usage and memory pressure because indexes consume storage and compete for buffer/cache space.
+- It can make query planning more expensive because the database optimizer has more possible indexes to evaluate.
+- It can also slow schema changes and migrations, especially on large DocType tables.
+- For QuickFix, good index candidates are fields frequently searched in list views or reports, such as `status`, `assigned_technician`, `creation`, or `delivery_date`. Poor candidates are rarely filtered long text fields, notes, descriptions, or fields with low query value.
 
 ### Transactions & Commit Behavior
 - The app also implements `transfer_job(from_tech, to_tech)` using raw SQL inside a try/except.
@@ -948,3 +1008,335 @@ In such scenarios:
 - maintenance becomes harder
 
 A Script Report should be used instead because it provides proper backend control, optimized queries, and scalable business logic.
+
+- Raw printing sends direct ESC/POS commands to thermal printers for fast receipt printing without HTML or PDF rendering.  
+- Frappe’s HTML-PDF printing uses Jinja templates + WeasyPrint to convert styled HTML/CSS into printable PDF documents.  
+- Raw printing is lightweight and printer-specific, while WeasyPrint supports rich layouts, tables, images, and page styling.  
+- CSS properties that often fail or behave differently in WeasyPrint: `position: sticky`, `backdrop-filter`, and complex `flexbox/grid` layouts.
+
+## Background Jobs
+
+### short queue
+
+- Sending a single email notification
+- Updating a cache entry
+- Simple document hooks (on_submit lightweight actions)
+- Auto-assignment rules
+- Reminder notifications
+
+## default queue
+
+- Bulk email sending
+- Report generation (Script Reports)
+- Scheduled job triggers (daily, hourly tasks)
+- Data import/export (small-medium files)
+- Webhook delivery
+
+## long queue
+
+- Large data imports (thousands of rows)
+- PDF generation for bulk print
+- Full site backup
+- Bulk update operations
+- Database-heavy scheduled tasks
+
+*short   queue  ──→  worker.short    (1 worker, fast turnaround)
+default queue  ──→  worker.default  (1 worker, medium tasks)
+long    queue  ──→  worker.long     (1 worker, heavy tasks)*
+
+### Triggering & locating errors (minimal)
+- Trigger: enqueue a job that raises an exception, e.g. `frappe.enqueue("quickfix.quickfix.M3.error_job")`.
+- Find: `Setup → Error Log` records fields like: `seen`, `reference_doctype`, `reference_name`, `method`, `error`, `trace_id`, `metadata`, `_user_tags`, `_comments`, `_assign`, `liked_by`
+
+- RQ dashboard: open failed job → click **Requeue** to retry (or use `rq requeue` CLI).
+
+## Scheduler Per Site
+
+To pause the scheduler for a specific site:
+
+```bash
+bench --site quickfix-dev.localhost scheduler pause
+```
+
+To enable it again:
+
+```bash
+bench --site quickfix-dev.localhost scheduler resume
+```
+
+- This is useful on a development site because scheduled jobs can send emails, create logs, trigger notifications, run reports, or modify test data while you are debugging. Pausing the scheduler keeps background automation from changing dev data unexpectedly.
+
+- If the scheduler enqueues jobs while the worker is down, those jobs remain in the Redis queue. When the worker starts again, it picks up the queued jobs and runs them.
+
+- If the scheduler itself is paused or stopped, missed schedule times are not usually backfilled automatically. The job runs again only at the next scheduled time after the scheduler is active.
+
+
+## K3 N+1 query deduction 
+```python
+job_cards=frappe.get_all("Job Card",field=["name","assigned_technician"])
+tech=[i.assigned_technician for i in job_cards]
+technicians=frappe.get_all("Technician",fields=["technician_name","mobile_number"],filters=["name":["in",tech]])
+for t in technicians:
+    print(t.technician_name , t.mobile_number) 
+```
+
+## L1 A-
+- req1:GET /api/resource/Job Card
+    res : 
+    ```json
+    {"data":[{"name":"JC-2026-00001"},{"name":"JC-2026-00002"},{"name":"JC-2026-00001-1"},{"name":"JC-2026-00003"},{"name":"JC-2026-00002-1"},{"name":"JC-2026-00002-2"},{"name":"JC-2026-00004"},{"name":"JC-2026-00003-1"},{"name":"JC-2026-00005"},{"name":"JC-2026-00005-1"},{"name":"JC-2026-00006"},{"name":"JC-2026-00007"},{"name":"JC-2026-00008"},{"name":"JC-2026-00009"},{"name":"JC-2026-00009-1"},{"name":"JC-2026-00010"},{"name":"JC-2026-00010-1"},{"name":"JC-2026-00004-1"},{"name":"JC-2026-00011"}]}
+    ```
+- req2 : GET /api/resource/Job Card/JC-2026-00011
+    res : 
+    ```json
+    {"data":{"name":"JC-2026-00011","owner":"Administrator","creation":"2026-05-13 16:33:17.190333","modified":"2026-05-13 16:33:23.005652","modified_by":"Administrator","docstatus":1,"idx":0,"customer_name":"kaviya","customer_phone":"1234567890","customer_email":"kaviyaveerapandi21@gmail.com","device_type":"Tablet","problem_description":"<div class=\"ql-editor read-mode\"><p>wertyuio</p></div>","assigned_technician":"new_TECH0003","estimate_cost":0.0,"priority":"Normal","parts_total":3000.0,"labour_charge":500.0,"final_amountc":3500.0,"payment_status":"Unpaid","status":"Ready for Delivery","doctype":"Job Card","parts_used":[{"name":"24kj0a6g8v","owner":"Administrator","creation":"2026-05-13 16:33:17.190333","modified":"2026-05-13 16:33:23.005652","modified_by":"Administrator","docstatus":1,"idx":1,"part":"PART-2026-0002","part_name":"Laptop Screen (15.6\" HD/FHD LED)","unit_price":3000.0,"quandity":1.0,"total_price":3000.0,"parent":"JC-2026-00011","parentfield":"parts_used","parenttype":"Job Card","doctype":"Part Usage Entry"}]}}
+    ```
+- req3 : POST /api/resource/Spare Part
+    res : 
+    ```json
+    {"data":{"name":"PART-2026-0009","owner":"Administrator","creation":"2026-05-14 15:46:19.177289","modified":"2026-05-14 15:46:19.177289","modified_by":"Administrator","docstatus":0,"idx":0,"part_name":"sample part","compatible_device_type":"Laptop","unit_cost":30.0,"selling_price":35.0,"stock_qty":0.0,"reorder_level":5.0,"is_active":1,"doctype":"Spare part"}}
+    ```
+- req4 : PUT /api/resource/Spare Part/PART-2026-0009
+    res :
+    ```json
+    {"data":{"name":"PART-2026-0009","owner":"Administrator","creation":"2026-05-14 15:46:19.177289","modified":"2026-05-14 15:50:19.715587","modified_by":"Administrator","docstatus":0,"idx":0,"part_name":"sample part","compatible_device_type":"Smart Phone","unit_cost":30.0,"selling_price":35.0,"stock_qty":0.0,"reorder_level":5.0,"is_active":1,"doctype":"Spare part"}}
+    ```
+- req5 : DELETE /api/resource/Spare Part/PART-2026-0009
+    res : 
+    ```json
+    {"data":"ok"}
+    ```
+## Why rate limiting is important for allow_guest=True
+
+### Public guest APIs are accessible without login, so they are vulnerable to abuse.
+
+#### Common attack vectors:
+
+    Brute-force data enumeration
+    attacker tries thousands of phone numbers
+    leaks customer/job information
+    Denial of Service (DoS)
+    excessive requests overload workers/database
+    slows down or crashes server
+    Scraping / data harvesting
+    automated bots collect business/customer data
+    privacy and security risk
+
+Additional risks:
+
+    credential stuffing
+    API abuse by bots
+    database load amplification
+    spam automation
+
+# Server Scripts — Developer Reference
+
+## What Is a Server Script?
+
+A Frappe **Server Script** is Python code stored in the database and executed
+in a restricted sandbox at runtime. No deployment, no `bench migrate` — changes
+take effect immediately after saving.
+
+---
+
+## Blocked Functions & Modules
+
+The sandbox strips dangerous builtins. These are **unavailable**:
+
+| Blocked | Why |
+|---|---|
+| `import` (arbitrary) | Only a fixed whitelist of safe modules allowed |
+| `open()`, `os`, `sys` | No filesystem or process access |
+| `subprocess`, `shutil` | No shell execution |
+| `socket`, `requests`, `urllib` | No outbound network calls |
+| `eval()`, `exec()`, `compile()` | No dynamic code execution |
+| `__import__()` | Import system locked |
+| `globals()`, `locals()` | No runtime introspection |
+
+**Safe modules available inside sandbox:**
+`frappe`, `json`, `datetime`, `math`, `re`, `string`, `_dict`
+
+---
+
+## 3 Things You Cannot Do in a Server Script
+
+**1. Call external APIs or send raw HTTP requests**
+```python
+#  Blocked in Server Script
+import requests
+requests.post("https://api.example.com/webhook", json=data)
+
+# App code — api.py
+import requests
+requests.post(...)
+```
+
+**2. Import third-party libraries**
+```python
+# Blocked
+import pandas as pd
+import pyqrcode
+
+#  App code only
+import pyqrcode   # works fine in utils.py, api.py
+```
+
+**3. Read/write files or run shell commands**
+```python
+# ❌ Blocked
+with open("/tmp/report.csv", "w") as f:
+    f.write(data)
+
+subprocess.run(["bench", "migrate"])
+
+# ✅ App code only
+import csv, subprocess
+```
+
+---
+
+## When Server Scripts Are Acceptable
+
+**Scenario 1 — Quick field validation on save**
+
+Checking that `delivery_date` is not before `diagnosis_date` on a Job Card.
+No imports needed, pure `frappe.db` and `frappe.throw`. Safe, fast to ship,
+easy for a non-developer admin to tweak without a deployment.
+
+```python
+# Doc Event → Job Card → before_save
+if doc.delivery_date and doc.diagnosis_date:
+    if doc.delivery_date < doc.diagnosis_date:
+        frappe.throw("Delivery date cannot be before diagnosis date.")
+```
+
+**Scenario 2 — Auto-assign a field on submit**
+
+Stamping `submitted_by` and `submitted_at` when a Service Invoice is submitted.
+Single-document scope, no external dependencies, no logic complex enough to
+warrant version control.
+
+```python
+# Doc Event → Service Invoice → on_submit
+doc.submitted_by = frappe.session.user
+doc.submitted_at = frappe.utils.now()
+doc.save()
+```
+
+---
+
+## When You Must Use App Code Instead
+
+**Scenario 1 — QR code generation in a print format**
+
+`pyqrcode` is a third-party library. The sandbox blocks all non-whitelisted
+imports. Must live in `utils/utils.py`, registered in `hooks.py` under `jinja.methods`.
+
+```python
+#  Server Script — import pyqrcode → ImportError
+# quickfix/utils/utils.py
+import pyqrcode
+def get_qr_code(name): ...
+```
+
+**Scenario 2 — Monthly revenue background job**
+
+`generate_monthly_revenue_report` uses `frappe.enqueue`, `frappe.publish_progress`,
+`calendar.monthrange`, and complex multi-month DB logic. Server Scripts cannot
+be called by `frappe.enqueue` as a dotted path, cannot use `@frappe.whitelist`,
+and have no access to the `calendar` module. Must be app code.
+
+---
+
+## Governance & Maintainability Risks
+
+**1. No version control**
+Server Scripts live in the database. There is no `git diff`, no PR review,
+no rollback beyond Frappe's own document versioning. A bad edit goes live
+the moment you click Save — with no audit trail visible to your dev team.
+
+**2. Hidden logic, invisible to developers**
+A developer reading `api.py` and `hooks.py` has no way to know a Server Script
+also fires on the same DocType event. Business logic split across app code and
+the database creates invisible side effects that are extremely hard to debug.
+
+**3. No test coverage**
+Server Scripts cannot be covered by `pytest` unit tests in your app's
+`test_*.py` files. Bugs only surface in production or manual QA.
+
+**4. Breaks on migration**
+If a Server Script references a field that gets renamed or removed, it fails
+silently at runtime with no deploy-time warning. App code catches these as
+import errors or test failures before they reach production.
+
+**5. Multi-developer conflict**
+Two developers editing the same Server Script simultaneously produce a
+last-write-wins conflict with no merge strategy. App code uses Git — conflicts
+are resolved before merge.
+
+---
+
+## Quick Decision Rule
+
+```
+Does it need an import beyond frappe/json/datetime/math/re?
+    YES → App code
+
+Does it run in a background worker or get called by frappe.enqueue?
+    YES → App code
+
+Is it complex enough to need a unit test?
+    YES → App code
+
+Is it a simple field validation or auto-fill on a single DocType?
+    YES → Server Script is fine
+```
+
+---
+
+## File Placement Reference
+
+```
+quickfix/
+├── api.py                  ← @whitelist methods, background jobs
+├── scheduled_jobs.py       ← scheduler targets (daily/hourly/cron)
+├── utils/
+│   └── utils.py            ← Jinja helpers (get_qr_code, get_shop_name)
+└── quickfix/
+    └── doctype/
+        └── job_card/
+            └── job_card.py ← DocType class methods (validate, on_submit)
+```
+
+Server Scripts replace `job_card.py` class methods only for simple cases.
+Everything else belongs in the files above.
+
+## Production debugging patter
+- If a bug occurs only in production in Frappe Framework and cannot be reproduced in development, I would debug it using Error Log, Audit Log, and frappe.logger() without enabling developer_mode.
+
+- First, I would inspect Setup → Error Log to identify the exact exception, traceback, affected method, timestamps, and related document references using fields like method, error, reference_doctype, reference_name, and trace_id. This helps locate where the failure occurred in production.
+
+- Next, I would correlate the failure with entries in the custom Audit Log DocType to reconstruct the business flow before the error occurred. For example, I would check whether a Job Card was submitted, whether a webhook retry happened, which user triggered the action, and whether duplicate processing occurred.
+
+**SQL Injection Prevention**
+SQL injection happens when user input is embedded directly into a database query string, letting attackers manipulate the query logic. In Frappe, f-strings like `f"SELECT * WHERE phone='{phone}'"` are dangerous because malicious input like `' OR '1'='1` changes the query's meaning entirely. Parameterized queries pass user data separately from the SQL template using `%s` placeholders, so the database driver never interprets the input as code. `frappe.db.escape()` exists to manually sanitize strings but is fragile — developers must remember to call it every time, and edge cases exist. The Frappe ORM (`frappe.get_all()` with a `filters` dict) is the best approach because it is fully parameterized by default. The rule is simple: never concatenate user input into SQL; always let the driver handle data separately from code.
+
+---
+
+**allow_guest Risks**
+`allow_guest=True` makes an endpoint publicly accessible with zero authentication, meaning anyone on the internet can call it. Without input validation on the phone number, three attacks become trivial: SQL injection (if the phone touches a raw query), enumeration (automated scripts loop through thousands of numbers to discover which ones have accounts), and denial of service (flooding the endpoint with requests exhausts database connections). Sanitizing the phone to digits-only with a 10-character maximum ensures the value cannot carry SQL payloads or abnormal data. Checking that at least one job exists before returning any response prevents enumeration — an attacker gets no useful signal from a failed lookup. A rate limiter keyed on IP address caps how many requests any single caller can make per minute, neutralizing the flood attack. Together these three defenses cover the full surface area the open endpoint exposes.
+
+---
+
+**ignore_permissions Analysis**
+`ignore_permissions=True` tells Frappe to skip all role-based permission checks for a database operation, regardless of who the current user is. It is legitimate only in system-initiated contexts: background jobs, schedulers, webhook handlers, and after-submit hooks that run under a system user with no human session. In each of those cases the action is automated business logic, not a response to a user's direct request, so the bypass is justified. The danger arises when a developer adds it to a user-facing endpoint — and the worst case is combining it with `allow_guest=True`. That combination means any anonymous person on the internet can read, write, or delete any document in the system because both the authentication check and the permission check are disabled simultaneously. Frappe's entire security model collapses to nothing with those two lines together.
+
+---
+
+**Private vs Public Files**
+Frappe stores uploaded files in two separate directories with fundamentally different access rules. Files in `/public/files/` are served directly by Nginx — anyone with the URL can download them instantly with no login. Files in `/private/files/` are never served by Nginx directly; Frappe's Python middleware intercepts the request, checks whether the user has an active session and the correct document permission, and only then streams the bytes. Trying to access a private file via a direct `/files/filename.pdf` URL returns a 404 because no Nginx route exists for that path. Accessing `/private/files/filename.pdf` requires a valid login and Read permission on the linked document. Private files are appropriate for anything sensitive — invoices, contracts, customer records, medical documents. Public files are appropriate for assets that are intentionally world-readable like product images or marketing brochures.
+
+---
+
+**Secrets Management**
+Hardcoding an API key directly in Python source code means the secret is readable by every developer, contractor, or intern with file access, and it travels into version control where it becomes permanent. `frappe.conf.get("payment_api_key")` reads the value from `site_config.json` on the server filesystem, which is never served to clients and should never be committed to git. `common_site_config.json` is the wrong place for secrets because it applies to every site on the bench, so a single file's exposure compromises all sites at once — and it is frequently included in deployment scripts that are version-controlled. Committing `site_config.json` to git is particularly dangerous because git history is permanent: even after the file is deleted, every past commit and every clone of the repository still contains the secret. If a secret is ever committed, the only correct response is to treat it as already compromised and rotate it immediately — scrubbing history is helpful but cannot guarantee the secret was not already harvested.

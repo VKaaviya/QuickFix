@@ -62,7 +62,8 @@
   {
    "fieldname": "customer_email",
    "fieldtype": "Data",
-   "label": "Customer email"
+   "label": "Customer email",
+   "options": "Email"
   },
   {
    "fieldname": "device_type",
@@ -101,7 +102,8 @@
    "fieldname": "assigned_technician",
    "fieldtype": "Link",
    "label": "Assigned technician",
-   "options": "Technician"
+   "options": "Technician",
+   "search_index": 1
   },
   {
    "fieldname": "diagnosis_notes",
@@ -177,7 +179,8 @@
    "allow_on_submit": 1,
    "fieldname": "delivery_date",
    "fieldtype": "Date",
-   "label": "Delivery Date"
+   "label": "Delivery Date",
+   "mandatory_depends_on": "eval:doc.status==\"Delivered\";"
   },
   {
    "fieldname": "remarks",
@@ -203,7 +206,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-11 16:06:43.504376",
+ "modified": "2026-05-19 12:15:35.158819",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Job Card",
@@ -264,6 +267,15 @@
    "share": 1,
    "submit": 1,
    "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Guest",
+   "share": 1
   }
  ],
  "row_format": "Dynamic",

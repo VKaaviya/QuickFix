@@ -8,7 +8,7 @@ from frappe.model.naming import make_autoname
 
 class Sparepart(Document):
 	def before_save(self):
-		if self.selling_price < self.unit_cost:
+		if self.selling_price <= self.unit_cost:
 			frappe.throw("Selling price must be greater than unit cost")
 
 	def autoname(self):
