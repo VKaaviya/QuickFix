@@ -22,9 +22,7 @@ def load_test_fixtures():
             records = json.load(f)
 
         for record in records:
-            try:
                 frappe.get_doc(record).insert(
                     ignore_if_duplicate=True
                 )
-            except Exception:
-                frappe.db.rollback()
+                frappe.db.commit()
