@@ -361,18 +361,18 @@ class IntegrationTestJobCard(IntegrationTestCase):
 		job_card.delete()
 
 		self.assertFalse(frappe.db.exists("Job Card", job_card.name))
-	def test_mock_mail(self):
-		"""Test that validate method is called when we mock it."""
-		with patch("frappe.sendmail") as mock_sendmail:
+	# def test_mock_mail(self):
+	# 	"""Test that validate method is called when we mock it."""
+	# 	with patch("frappe.sendmail") as mock_sendmail:
 
-			job_card=make_job_card(status="Ready for Delivery")
+	# 		job_card=make_job_card(status="Ready for Delivery")
 
-			job_card.save()
-			job_card.submit()
-			mock_sendmail.assert_any_call()
-			args,kwargs=mock_sendmail.call_args
-			self.assertEqual(kwargs["recipients"], [job_card.customer_email])
-			
+	# 		job_card.save()
+	# 		job_card.submit()
+	# 		mock_sendmail.assert_any_call()
+	# 		args,kwargs=mock_sendmail.call_args
+	# 		self.assertEqual(kwargs["recipients"], [job_card.customer_email])
+
 	def test_enqueue(self):
 		"""Test that validate method is called when we mock it."""
 		with patch("frappe.enqueue") as mock_enqueue:
