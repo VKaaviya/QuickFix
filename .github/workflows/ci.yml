@@ -107,7 +107,7 @@ jobs:
       - name: Load Test Fixtures
         working-directory: /home/runner/frappe-bench
         run: |
-           bench --site testcase  execute quickfix.tests.setup_test_data.load_test_fixtures
+          bench --site test_site  execute quickfix.tests.setup_test_data.load_test_fixtures
 
       - name: Run Tests
         working-directory: /home/runner/frappe-bench
