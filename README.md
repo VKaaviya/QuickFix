@@ -1,3 +1,6 @@
+
+[![CI](https://github.com/VKaaviya/QuickFix/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/VKaaviya/QuickFix/actions/workflows/ci.yml)
+
 ### Quickfix
 
 Management app for electronics repair shop
@@ -147,3 +150,4 @@ Fault Tolerance
 - `has_permission` is called for an individual record and checks whether the user has access to that specific document.
 - When retrieving records from the database, `get_all` and `get_list` behave differently with respect to permissions. `get_all` bypasses Frappe role permissions and can expose all records and fields, which is a security risk.
 - `get_list` enforces role permissions and applies filters correctly for each record, so it is safer to use when permission checks are required.
+

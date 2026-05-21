@@ -1,5 +1,50 @@
 [
  {
+  "app": null,
+  "charts": [
+   {
+    "chart_name": "Job per Status",
+    "label": "Job per Status"
+   }
+  ],
+  "content": "[{\"id\":\"qEuul8KnBD\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Welcome to the <b>QuickFix</b> workspace</span>\",\"col\":12}},{\"id\":\"Cot8LXXwAx\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Job cards-1\",\"col\":4}},{\"id\":\"3wfEHYh74m\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today's revenue from delivered jobs\",\"col\":4}},{\"id\":\"i7bm8OcVm6\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Job per Status\",\"col\":12}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "external_link": null,
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": null,
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Dummy",
+  "link_to": null,
+  "link_type": "DocType",
+  "links": [],
+  "modified": "2026-05-12 15:08:41.634006",
+  "module": null,
+  "name": "Dummy",
+  "number_cards": [
+   {
+    "label": "Open Job cards-1",
+    "number_card_name": "Open Job cards-1"
+   },
+   {
+    "label": "Today's revenue from delivered jobs",
+    "number_card_name": "Today's revenue from delivered jobs"
+   }
+  ],
+  "parent_page": null,
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 0.0,
+  "shortcuts": [],
+  "title": "Dummy",
+  "type": "Workspace"
+ },
+ {
   "app": "frappe",
   "charts": [
    {
@@ -1089,6 +1134,68 @@
   "sequence_id": 14.0,
   "shortcuts": [],
   "title": "Website",
+  "type": "Workspace"
+ },
+ {
+  "app": null,
+  "charts": [],
+  "content": "[{\"id\":\"2eyXSHwMTE\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h2\\\">Hi,</span>\",\"col\":12}},{\"id\":\"ZusKvFOXgu\",\"type\":\"paragraph\",\"data\":{\"text\":\"I guess you don't have access to any workspace yet, but you can create one just for yourself. Click on the <b>Create Workspace</b> button to create one.<br>\",\"col\":12}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "external_link": null,
+  "for_user": "",
+  "hide_custom": 0,
+  "icon": "image-view",
+  "indicator_color": null,
+  "is_hidden": 0,
+  "label": "Welcome Workspace",
+  "link_to": null,
+  "link_type": null,
+  "links": [],
+  "modified": "2023-07-28 20:15:32.222029",
+  "module": "Core",
+  "name": "Welcome Workspace",
+  "number_cards": [],
+  "parent_page": "",
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 22.0,
+  "shortcuts": [],
+  "title": "Welcome Workspace",
+  "type": null
+ },
+ {
+  "app": null,
+  "charts": [],
+  "content": "[]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "external_link": null,
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": null,
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Quickfix",
+  "link_to": null,
+  "link_type": "DocType",
+  "links": [],
+  "modified": "2026-05-12 13:49:37.737035",
+  "module": null,
+  "name": "Quickfix",
+  "number_cards": [],
+  "parent_page": null,
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [],
+  "sequence_id": 0.0,
+  "shortcuts": [],
+  "title": "Quickfix",
   "type": "Workspace"
  }
 ]

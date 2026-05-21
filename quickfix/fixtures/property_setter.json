@@ -1,6 +1,22 @@
 [
  {
   "default_value": null,
+  "doc_type": "Job Card",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocType",
+  "field_name": null,
+  "is_system_generated": 1,
+  "modified": "2026-05-19 12:14:03.321195",
+  "module": null,
+  "name": "Job Card-main-default_print_format",
+  "property": "default_print_format",
+  "property_type": "Data",
+  "row_name": null,
+  "value": "Job Card Receipt"
+ },
+ {
+  "default_value": null,
   "doc_type": "Service Invoice",
   "docstatus": 0,
   "doctype": "Property Setter",

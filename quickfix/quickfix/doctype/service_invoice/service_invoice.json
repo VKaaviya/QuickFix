@@ -82,10 +82,11 @@
   }
  ],
  "grid_page_length": 50,
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-04-29 15:55:55.336928",
+ "modified": "2026-05-20 21:49:34.240946",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Service Invoice",

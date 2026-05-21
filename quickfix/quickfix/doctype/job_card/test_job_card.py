@@ -306,8 +306,7 @@ class IntegrationTestJobCard(IntegrationTestCase):
 
 		job_card.append("parts_used", {
 			"part": self.spare_part.name,
-			"quandity": 2,
-			"unit_price": self.spare_part.selling_price
+			"quandity": 2
 		})
 
 		job_card.save()
@@ -366,20 +365,14 @@ class IntegrationTestJobCard(IntegrationTestCase):
 		"""Test that validate method is called when we mock it."""
 		with patch("frappe.sendmail") as mock_sendmail:
 
-			job_card = make_job_card(status="Ready for Delivery")
-
-			job_card.append("parts_used", {
-				"part": self.spare_part.name,
-				"quandity": 2,
-				"unit_price": self.spare_part.selling_price
-			})
+			job_card=make_job_card(status="Ready for Delivery")
 
 			job_card.save()
 			job_card.submit()
-
-			mock_sendmail.assert_called()
+			mock_sendmail.assert_any_call()
 			args,kwargs=mock_sendmail.call_args
 			self.assertEqual(kwargs["recipients"], [job_card.customer_email])
+			
 	def test_enqueue(self):
 		"""Test that validate method is called when we mock it."""
 		with patch("frappe.enqueue") as mock_enqueue:

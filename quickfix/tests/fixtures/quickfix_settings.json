@@ -1,0 +1,13 @@
+[
+    {
+        "default_labour_charge": 500.0,
+        "docstatus": 0,
+        "doctype": "Quickfix Settings",
+        "low_stock_alert_enabled": 1,
+        "manager_email": "test@example.com",
+        "modified": "2026-04-29 10:45:45.877174",
+        "name": "Quickfix Settings",
+        "shop_name": "Test Centre",
+        "webhook_url": "https://webhook.site/bea1cb67-9b3d-4724-84f3-8e237b140b2d"
+    }
+]

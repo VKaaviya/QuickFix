@@ -1340,3 +1340,101 @@ Frappe stores uploaded files in two separate directories with fundamentally diff
 
 **Secrets Management**
 Hardcoding an API key directly in Python source code means the secret is readable by every developer, contractor, or intern with file access, and it travels into version control where it becomes permanent. `frappe.conf.get("payment_api_key")` reads the value from `site_config.json` on the server filesystem, which is never served to clients and should never be committed to git. `common_site_config.json` is the wrong place for secrets because it applies to every site on the bench, so a single file's exposure compromises all sites at once — and it is frequently included in deployment scripts that are version-controlled. Committing `site_config.json` to git is particularly dangerous because git history is permanent: even after the file is deleted, every past commit and every clone of the repository still contains the secret. If a secret is ever committed, the only correct response is to treat it as already compromised and rotate it immediately — scrubbing history is helpful but cannot guarantee the secret was not already harvested.
+
+## Frappe & ERPNext CI Workflow Notes
+
+### What Linux service containers does the Frappe CI workflow need and why? What breaks if MariaDB is missing?
+
+Frappe CI usually needs these service containers:
+
+* **MariaDB** → Main database used by Frappe to store DocTypes, records, users, permissions, etc.
+* **Redis Queue** → Used for background jobs and task queues.
+* **Redis Cache** → Used for caching metadata, sessions, and realtime data.
+
+If MariaDB is missing:
+
+* `bench new-site` fails
+* Sites cannot be created
+* DocTypes cannot be installed
+* Tests cannot run because Frappe depends fully on the database.
+
+---
+
+### Why does the ERPNext CI workflow use `--skip-assets` when installing apps?
+
+`--skip-assets` skips frontend asset building during CI setup.
+
+This makes CI much faster because:
+
+* JS/CSS bundling is slow
+* Most backend tests do not need compiled frontend assets
+* CI mainly checks Python logic, database behavior, and tests
+
+ERPNext uses it to reduce pipeline execution time.
+
+---
+
+### What is the purpose of `bench start` in CI versus `bench serve`? Does CI need either?
+
+* `bench start` runs the full development stack:
+
+  * web server
+  * Redis workers
+  * scheduler
+  * socketio
+  * file watcher
+
+* `bench serve` runs only the web server.
+
+CI usually needs neither because tests run directly using:
+
+```bash
+bench --site test_site run-tests
+```
+
+The CI pipeline only needs the database and Python environment, not an interactive development server.
+
+---
+
+### What happens to the test site after the CI run completes? Is cleanup needed?
+
+The GitHub Actions runner is temporary.
+
+After the workflow finishes:
+
+* the Ubuntu VM is destroyed
+* the test site is deleted automatically
+* databases and files are removed with the runner
+
+Manual cleanup is usually not needed in CI.
+
+## Test Data Strategy Notes
+
+### Why it is dangerous to put Job Card or Technician records in fixtures?
+
+Job Card and Technician are transactional records. Tests may modify, submit, cancel, or delete them. Shared fixture data can make tests depend on each other and cause inconsistent CI failures.
+
+### What happens if a mandatory field is added to Spare Part but fixture is not updated?
+
+The CI pipeline fails during fixture loading or test setup because the old fixture JSON does not contain the new mandatory field value.
+
+### Why should test fixtures and production/demo fixtures stay separate?
+
+Test fixtures are only for automated testing and may contain fake or resettable data. Mixing them with production/demo fixtures can pollute real environments and make deployments unsafe.
+
+## Why is `ignore_if_duplicate=True` important?
+
+`ignore_if_duplicate=True` prevents Frappe from throwing a duplicate entry error if the same record already exists in the database.  
+
+This is essential for test setup scripts because CI pipelines, local tests, or repeated setup commands may run multiple times. Without it, fixture loading would fail on the second run when records already exist.
+
+---
+
+## Why are Device Type records present in both `fixtures/` and `fixtures/test/`?
+
+This duplication is intentional.  
+
+- `fixtures/` contains production or deployment fixtures needed when the app is installed normally.
+- `fixtures/test/` contains test-specific data loaded explicitly during CI/testing.
+
+Keeping them separate ensures test environments are predictable and isolated from production/demo data. It also allows test fixtures to evolve independently without affecting deployment fixtures.
