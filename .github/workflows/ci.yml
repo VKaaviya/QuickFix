@@ -87,15 +87,11 @@ jobs:
         run: |
           pip install frappe-bench
           bench init --skip-redis-config-generation --skip-assets --python "$(which python)" ~/frappe-bench
-      
-      - name: Checkout QuickFix App 
-        uses: actions/checkout@v4 
-        with: 
-          path: /home/runner/frappe-bench/apps/quickfix
 
       - name: Install
         working-directory: /home/runner/frappe-bench
         run: |
+          bench get-app quickfix $GITHUB_WORKSPACE
           bench new-site --db-root-password root --admin-password admin test_site --db-name test_quickfix
 
       - name: Install Quickfix app
