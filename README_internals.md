@@ -1438,3 +1438,135 @@ This duplication is intentional.
 - `fixtures/test/` contains test-specific data loaded explicitly during CI/testing.
 
 Keeping them separate ensures test environments are predictable and isolated from production/demo data. It also allows test fixtures to evolve independently without affecting deployment fixtures.
+### CI Workflow Notes
+
+#### Errors Encountered During Initial Workflow Setup
+
+1. **Workspace fixture installation failure**
+
+   * Error: `MandatoryError: [Workspace, Welcome Workspace]: type`
+   * Cause: The exported `workspace.json` fixture accidentally included Frappe's core `Welcome Workspace` record with an invalid/missing `type` field for the current Frappe version.
+
+2. **Repository path not under workspace**
+
+   * Error: `Repository path '/home/runner/frappe-bench/apps/quickfix' is not under ...`
+   * Cause: `actions/checkout` only allows checkout paths inside the GitHub Actions workspace directory. An absolute path outside the workspace was used.
+
+3. **patch_get_url unexpected keyword argument**
+
+   * Error: `_custom_get_url() got an unexpected keyword argument 'allow_header_override'`
+   * Cause: A custom monkey patch for `get_url()` was incompatible with the newer Frappe version used in CI.
+
+4. **Tests passing locally but failing in CI**
+
+   * Cause: Local environment had existing data/configuration that CI did not have. CI always starts from a fresh site and exposed missing fixtures and dependency assumptions.
+
+5. **MariaDB configuration issues**
+
+   * Cause: Missing or incorrect UTF8 settings can cause `bench new-site` failures or database encoding issues.
+
+---
+
+#### CI Pipeline Runtime
+
+* Total runtime: approximately **8–15 minutes** depending on cache availability.
+* Slowest step:
+
+  * `bench init`
+  * `bench build`
+  * dependency installation (`pip` and `yarn`)
+
+These steps download and build large frontend/backend dependencies.
+
+---
+
+#### One Optimization to Speed Up CI
+
+Caching dependency downloads using:
+
+```yaml
+uses: actions/cache@v4
+```
+
+for:
+
+* `~/.cache/pip`
+* Yarn cache directory
+
+This avoids downloading Python and Node packages on every run and significantly reduces pipeline runtime.
+
+Another optimization:
+
+* Use `--skip-assets` during `bench init`
+* Avoid unnecessary `bench build` if frontend assets are unchanged
+
+---
+
+#### Difference Between run-tests and run-tests --coverage
+
+##### Normal Test Run
+
+```bash
+bench run-tests --app quickfix
+```
+
+* Runs all tests
+* Reports pass/fail status only
+
+##### Coverage Test Run
+
+```bash
+bench run-tests --app quickfix --coverage
+```
+
+* Runs tests
+* Measures how much source code was actually executed during testing
+
+---
+
+#### What Coverage Reports Show
+
+Coverage reports reveal:
+
+* Untested functions
+* Untested branches/conditions
+* Dead or unreachable code
+* Areas where tests are missing
+
+Passing tests only prove that tested scenarios work.
+Coverage shows how much of the codebase was tested at all.
+
+---
+
+#### Coverage Report Output Location
+
+Coverage reports are usually written to:
+
+```text
+sites/coverage.xml
+```
+
+or:
+
+```text
+sites/htmlcov/
+```
+
+depending on configuration.
+
+---
+
+#### Why Tests May Pass Locally But Fail in CI
+
+1. **Missing fixtures or seed data**
+
+   * Local site already contains records created manually.
+   * CI creates a fresh empty site every run.
+
+2. **Version differences**
+
+   * Different Python/Frappe/Node/MariaDB versions between local machine and CI.
+
+3. **Hidden local state**
+
+   * Cached files, installed apps, developer mode settings, or patched code existing locally but not in CI.

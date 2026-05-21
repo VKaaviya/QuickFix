@@ -207,6 +207,7 @@ class IntegrationTestJobCard(IntegrationTestCase):
 		job_card.save()
 
 		self.assertEqual(job_card.assigned_technician,technician.name)
+		
 	def test_estimate_cost_validation(self):
 		"""Test estimated cost validation when status is In Repair."""
 
