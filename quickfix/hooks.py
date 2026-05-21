@@ -6,17 +6,24 @@ app_version = "0.0.1"
 app_email = "kaviyaveerapandi21@gmail.com"
 app_license = "mit"
 
-fixtures=[
+
+fixtures = [
     {
-        "doctype":"Custom DocPerm",
+        "dt": "Custom DocPerm",
     },
     "Custom Field",
     "Property Setter",
     "Role",
-    "Workspace",
+    {
+        "dt": "Workspace",
+        "filters": [
+            ["name", "in", ["Quickfix", "Dummy"]]
+        ]
+    },
     "Device Type",
     "Quickfix Settings",
 ]
+
 
 on_session_creation="quickfix.overrides.log_login"
 on_logout="quickfix.overrides.logout_log"
