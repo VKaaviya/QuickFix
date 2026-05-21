@@ -107,10 +107,7 @@ jobs:
       - name: Load Test Fixtures
         working-directory: /home/runner/frappe-bench
         run: |
-          bench --site test_site console <<EOF
-          from quickfix.tests.setup_test_data import load_test_fixtures
-          load_test_fixtures()
-          EOF
+           bench --site testcase  execute quickfix.tests.setup_test_data.load_test_fixtures
 
       - name: Run Tests
         working-directory: /home/runner/frappe-bench

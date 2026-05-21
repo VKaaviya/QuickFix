@@ -25,4 +25,3 @@ def load_test_fixtures():
                 frappe.get_doc(record).insert(
                     ignore_if_duplicate=True
                 )
-                frappe.db.commit()
