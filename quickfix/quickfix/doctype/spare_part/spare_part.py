@@ -26,10 +26,8 @@ class Sparepart(Document):
 		if threshold is None:
 			return
 
-		try:
-			threshold = int(threshold)
-		except (TypeError, ValueError):
-			return
+		
+		threshold = int(threshold)
 
 		if self.stock_qty is not None and self.stock_qty <= threshold:
 			frappe.msgprint(

@@ -1570,3 +1570,21 @@ depending on configuration.
 3. **Hidden local state**
 
    * Cached files, installed apps, developer mode settings, or patched code existing locally but not in CI.
+
+---
+
+#### Why an Environment Sanity Test Is Valuable in Production CI
+
+A sanity test such as `test_environment_sanity` is valuable because it verifies that the CI site was built correctly before deeper application tests are trusted.
+
+Normal application tests usually prove that a specific workflow works: creating a Job Card, validating stock, generating an invoice, checking permissions, and so on. They often assume that the app is already installed correctly, fixtures are loaded, roles exist, singleton settings are present, and DocType metadata matches the code.
+
+The sanity test catches a different class of failure: environment and installation drift. For example, it can fail when:
+
+* required fixture records such as `Device Type` values were not loaded
+* test-only roles were not installed
+* singleton configuration like `Quickfix Settings` is missing or incomplete
+* DocType metadata did not migrate correctly
+* a fixture export, migration, or CI setup step silently changed the shape of the site
+
+These problems may not be caught by a normal app test if that test does not touch the missing record or if it creates its own setup data. In production CI, the sanity test acts as an early warning that the deployed app's baseline assumptions are broken, even before business logic tests start exercising individual features.

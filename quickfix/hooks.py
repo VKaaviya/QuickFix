@@ -13,7 +13,16 @@ fixtures = [
     },
     "Custom Field",
     "Property Setter",
-    "Role",
+    {
+        "dt": "Role",
+        "filters": [
+            ["name", "in", [
+                "QF Service Staff",
+                "QF Technician",
+                "QF Manager"
+            ]]
+        ]
+    },
     {
         "dt": "Workspace",
         "filters": [

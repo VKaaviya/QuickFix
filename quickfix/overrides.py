@@ -1,4 +1,5 @@
 import frappe
+## hook methods for login and session creation
 def log_login(login_manager=None):
         if login_manager.user !="Guest":
             doc=frappe.get_doc({

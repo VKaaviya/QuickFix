@@ -50,7 +50,6 @@ def reject_job_card(job_card_name, rejection_reason, notify_customer=0):
     doc = frappe.get_doc ("Job Card", job_card_name)
 
     doc.status           = "Cancelled"
-    doc.rejection_reason = rejection_reason
     doc.save(ignore_permissions=True)
 
     if int(notify_customer) and doc.customer_email:
@@ -72,7 +71,8 @@ def reject_job_card(job_card_name, rejection_reason, notify_customer=0):
 
 
 def validate(doc, method):
-	print("validate 2")
+	# print("validate 2")
+	pass
 class JobCard(Document):
 	def validate(self):
 
@@ -170,10 +170,10 @@ class JobCard(Document):
 				"parts_total": self.parts_total,
 				"total_amount": self.final_amountc,
 				"payment_status": "Unpaid",
-				"docstatus": 1,
 			}
 		)
 		invoice.insert(ignore_permissions=True)
+		invoice.submit()
 	def validate_part_quantities(self):
 		if self.parts_used:
 			for row in self.parts_used:
