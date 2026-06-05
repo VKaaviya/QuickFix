@@ -13,14 +13,11 @@ def payload_bytes(payload):
 
 def generate_signature(payload, secret):
     signature = hmac.new(
-        secret.encode(),
-        payload_bytes(payload),
-        hashlib.sha256
+        secret.encode(), payload_bytes(payload), hashlib.sha256
     ).hexdigest()
 
     return signature
 
 
-def generate(payload,secret):
+def generate(payload, secret):
     return generate_signature(payload, secret)
-

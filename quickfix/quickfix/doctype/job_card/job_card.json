@@ -68,6 +68,7 @@
   {
    "fieldname": "device_type",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Device type",
    "options": "Device Type",
    "reqd": 1
@@ -206,7 +207,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2026-05-19 12:15:35.158819",
+ "modified": "2026-06-05 10:15:04.045787",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Job Card",

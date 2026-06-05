@@ -16,33 +16,22 @@ fixtures = [
     {
         "dt": "Role",
         "filters": [
-            ["name", "in", [
-                "QF Service Staff",
-                "QF Technician",
-                "QF Manager"
-            ]]
-        ]
+            ["name", "in", ["QF Service Staff", "QF Technician", "QF Manager"]]
+        ],
     },
-    {
-        "dt": "Workspace",
-        "filters": [
-            ["name", "in", ["Quickfix", "Dummy"]]
-        ]
-    },
+    {"dt": "Workspace", "filters": [["name", "in", ["Quickfix", "Dummy"]]]},
     "Device Type",
     "Quickfix Settings",
 ]
 
 
-on_session_creation="quickfix.overrides.log_login"
-on_logout="quickfix.overrides.logout_log"
+on_session_creation = "quickfix.overrides.log_login"
+on_logout = "quickfix.overrides.logout_log"
 
-website_route_rules=[
-    {"from_route":"/track-jobs","to_route":"/track_job"}
-]
+website_route_rules = [{"from_route": "/track-jobs", "to_route": "/track_job"}]
 
-portal_menu_items=[
-    {"title":"Track My Job","route":"/track-jobs","role":"All"},
+portal_menu_items = [
+    {"title": "Track My Job", "route": "/track-jobs", "role": "All"},
 ]
 
 # Apps
@@ -61,8 +50,8 @@ portal_menu_items=[
 # 	}
 # ]
 
-#Bootinfo
-extend_bootinfo="quickfix.boot.extend_bootinfo"
+# Bootinfo
+extend_bootinfo = "quickfix.boot.extend_bootinfo"
 
 # Includes in <head>
 # ------------------
@@ -86,7 +75,7 @@ extend_bootinfo="quickfix.boot.extend_bootinfo"
 # page_js = {"navigation" : "public/js/quickfix.js"}
 
 # include js in doctype views
-doctype_js = {"Job Card" : "public/js/job_card.js"}
+doctype_js = {"Job Card": "public/js/job_card.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -121,15 +110,18 @@ doctype_js = {"Job Card" : "public/js/job_card.js"}
 
 # add methods and filters to jinja environment
 jinja = {
-	"methods": ["quickfix.utils.utils.get_shop_name","quickfix.utils.utils.get_qr_code"],
-    "filters":["quickfix.utils.utils.format_job_id"]
+    "methods": [
+        "quickfix.utils.utils.get_shop_name",
+        "quickfix.utils.utils.get_qr_code",
+    ],
+    "filters": ["quickfix.utils.utils.format_job_id"],
 }
 
 # Installation
 # ------------
 
 # before_install = "quickfix.install.before_install"
-after_install =["quickfix.install.after_install"]
+after_install = ["quickfix.install.after_install"]
 
 # Uninstallation
 # ------------
@@ -170,11 +162,11 @@ before_uninstall = "quickfix.uninstall.before_uninstall"
 # Permissions evaluated in scripted ways
 
 permission_query_conditions = {
-	"Job Card": "quickfix.quickfix.doctype.job_card.job_card.get_permission_query_conditions",
+    "Job Card": "quickfix.quickfix.doctype.job_card.job_card.get_permission_query_conditions",
 }
 #
 has_permission = {
-	"Service Invoice": "quickfix.quickfix.doctype.service_invoice.service_invoice.has_permission",
+    "Service Invoice": "quickfix.quickfix.doctype.service_invoice.service_invoice.has_permission",
 }
 
 
@@ -183,44 +175,36 @@ has_permission = {
 # Hook on document methods and events
 
 doc_events = {
-	( "Job Card", "Service Invoice", "Spare part", "Quickfix Settings"): {
-		"on_update": "quickfix.quickfix.audit.log_change.logchange",
-		"on_submit": ["quickfix.quickfix.audit.log_change.logchange"],
-		"on_cancel": "quickfix.quickfix.audit.log_change.logchange",
-	},
-    "Job Card":{
+    ("Job Card", "Service Invoice", "Spare part", "Quickfix Settings"): {
+        "on_update": "quickfix.quickfix.audit.log_change.logchange",
+        "on_submit": ["quickfix.quickfix.audit.log_change.logchange"],
+        "on_cancel": "quickfix.quickfix.audit.log_change.logchange",
+    },
+    "Job Card": {
         "on_update": "quickfix.chache_method.clear_status_chart_data",
-		"on_submit": "quickfix.webhooks.job_card_submitted",
+        "on_submit": "quickfix.webhooks.job_card_submitted",
         "on_update_after_submit": "quickfix.chache_method.clear_status_chart_data",
-        
-    }
-    
+    },
 }
 
 # Scheduled Tasks
 # ---------------
 
 scheduler_events = {
-# 	"all": [
-# 		"quickfix.tasks.all"
-# 	],
-	"daily": [
-		"quickfix.scheduled_jobs.check_low_stock"
-	],
-# 	"hourly": [
-# 		"quickfix.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"quickfix.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"quickfix.tasks.monthly"
-# 	],
-    "cron": {
-    "0 1 2 * *": [
-    "quickfix.api.generate_monthly_revenue_report"
-    ]
-    }
+    # 	"all": [
+    # 		"quickfix.tasks.all"
+    # 	],
+    "daily": ["quickfix.scheduled_jobs.check_low_stock"],
+    # 	"hourly": [
+    # 		"quickfix.tasks.hourly"
+    # 	],
+    # 	"weekly": [
+    # 		"quickfix.tasks.weekly"
+    # 	],
+    # 	"monthly": [
+    # 		"quickfix.tasks.monthly"
+    # 	],
+    "cron": {"0 1 2 * *": ["quickfix.api.generate_monthly_revenue_report"]},
 }
 
 # Testing
@@ -239,9 +223,7 @@ extend_doctype_class = {
 # Overriding Methods
 # ------------------------------
 #
-override_whitelisted_methods = {
-    "frappe.client.get_count": "quickfix.api.get_counts"
-}
+override_whitelisted_methods = {"frappe.client.get_count": "quickfix.api.get_counts"}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the% extends "www/portal.html" %} doctype dashboard,

@@ -204,7 +204,7 @@ frappe.ui.form.on("Job Card", {
         }
 
 
-        if (frm.doc.docstatus === 0) {
+        if ((frm.doc.docstatus === 0 ||  frm.doc.docstatus === 1 )&& frm.doc.status !== "Cancelled"  ) {
             frm.add_custom_button("Reject Job", function () {
                 show_reject_dialog(frm);
             }, "Actions");

@@ -7,31 +7,28 @@ from frappe.model.naming import make_autoname
 
 
 class Sparepart(Document):
-	def before_save(self):
-		if self.selling_price <= self.unit_cost:
-			frappe.throw("Selling price must be greater than unit cost")
+    def before_save(self):
+        if self.selling_price <= self.unit_cost:
+            frappe.throw("Selling price must be greater than unit cost")
 
-	def autoname(self):
-		if self.part_code:
-			self.part_code = self.part_code.upper()
-		self.name = make_autoname(self.meta.autoname, doc=self)
+    def autoname(self):
+        if self.part_code:
+            self.part_code = self.part_code.upper()
+        self.name = make_autoname(self.meta.autoname, doc=self)
 
-	def on_update(self):
-		threshold = frappe.db.get_value(
-			"QuickFix Settings",
-			None,
-			"low_stock_threshold",
-		)
+    def on_update(self):
+        threshold = frappe.db.get_value(
+            "QuickFix Settings",
+            None,
+            "low_stock_threshold",
+        )
 
-		if threshold is None:
-			return
+        if threshold is None:
+            return
 
-		
-		threshold = int(threshold)
+        threshold = int(threshold)
 
-		if self.stock_qty is not None and self.stock_qty <= threshold:
-			frappe.msgprint(
-				f"Spare part {self.part_code or self.name} is at or below low stock threshold ({threshold}).",
-			)
-
-
+        if self.stock_qty is not None and self.stock_qty <= threshold:
+            frappe.msgprint(
+                f"Spare part {self.part_code or self.name} is at or below low stock threshold ({threshold}).",
+            )

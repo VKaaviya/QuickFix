@@ -22,6 +22,4 @@ def load_test_fixtures():
             records = json.load(f)
 
         for record in records:
-                frappe.get_doc(record).insert(
-                    ignore_if_duplicate=True
-                )
+            frappe.get_doc(record).insert(ignore_if_duplicate=True)

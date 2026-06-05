@@ -1,21 +1,23 @@
-
 import frappe
 
 from frappe.model.document import bulk_insert
-from frappe.utils import flt, nowdate , now_datetime
+from frappe.utils import flt, nowdate, now_datetime
 from werkzeug.exceptions import TooManyRequests, BadRequest, NotFound
 import re
 
+
 @frappe.whitelist()
-def share_job_card(job_card_name,user_email):
-    doc=frappe.get_doc("Job Card",job_card_name)
-    frappe.share.add("Job Card",job_card_name,user_email,read=1)
+def share_job_card(job_card_name, user_email):
+    doc = frappe.get_doc("Job Card", job_card_name)
+    frappe.share.add("Job Card", job_card_name, user_email, read=1)
     return f"Job card Shared Successfully with {user_email}"
+
 
 @frappe.whitelist()
 def manager_only_action():
     frappe.only_for("QF Manager")
     return "You are allowed for this action"
+
 
 @frappe.whitelist()
 def get_job_cards_safe():
@@ -31,8 +33,8 @@ def get_job_cards_safe():
             "customer_phone",
             "customer_email",
             "assigned_technician",
-            "status"
-        ]
+            "status",
+        ],
     )
 
     # Strip sensitive data for non-managers
@@ -42,6 +44,7 @@ def get_job_cards_safe():
             jc.pop("customer_email", None)
 
     return job_cards
+
 
 @frappe.whitelist()
 def get_overdue_jobs():
@@ -63,35 +66,28 @@ def get_overdue_jobs():
     return query.run(as_dict=True)
 
 
-
-
 @frappe.whitelist()
 def get_counts(doctype, filters=None, debug=False, cache=False):
     frappe.enqueue(
-        "quickfix.api.create_audit_log",
-        doctype_name = doctype,
-        action       = "count_queried"
+        "quickfix.api.create_audit_log", doctype_name=doctype, action="count_queried"
     )
     if frappe.has_permission(doctype, "read"):
         return frappe.db.count(doctype, filters)
 
     return 0
-        
-
-        
 
 
-def create_audit_log(doctype_name,action,document_name=None):
-    frappe.get_doc({
-        "doctype"      : "Audit Log",
-        "doctype_name" : doctype_name,
-        "action"       : action,
-        "user"         : frappe.session.user,
-        "document_name": document_name if document_name else "",
-        "timestamp"    : frappe.utils.now_datetime()
-    }).insert(ignore_permissions=True)
-
-
+def create_audit_log(doctype_name, action, document_name=None):
+    frappe.get_doc(
+        {
+            "doctype": "Audit Log",
+            "doctype_name": doctype_name,
+            "action": action,
+            "user": frappe.session.user,
+            "document_name": document_name if document_name else "",
+            "timestamp": frappe.utils.now_datetime(),
+        }
+    ).insert(ignore_permissions=True)
 
 
 @frappe.whitelist()
@@ -104,46 +100,34 @@ def generate_monthly_revenue_report(year=None):
 
         jobs = frappe.get_all(
             "Job Card",
-
             filters={
                 "status": "Delivered",
                 "delivery_date": [">=", f"{year}-{month:02d}-01"],
-                "delivery_date": ["<", f"{year}-{month:02d}-31"]
+                "delivery_date": ["<", f"{year}-{month:02d}-31"],
             },
-
-            fields=[
-                "final_amountc",
-                "delivery_date"
-            ]
+            fields=["final_amountc", "delivery_date"],
         )
 
         revenue = 0
 
         for job in jobs:
 
-            if (
-                job.delivery_date.month == month
-                and job.delivery_date.year == year
-            ):
+            if job.delivery_date.month == month and job.delivery_date.year == year:
 
                 revenue += flt(job.final_amountc)
 
-        report.append({
-            "month": month,
-            "revenue": revenue
-        })
+        report.append({"month": month, "revenue": revenue})
 
         frappe.publish_progress(
             percent=round(i / 12 * 100),
-
             title="Generating Revenue Report",
-
             description=f"""
                 Processing month {month}...
-            """
+            """,
         )
 
     return report
+
 
 @frappe.whitelist()
 def fail_background_job():
@@ -154,74 +138,77 @@ def fail_background_job():
 def deliberately_fail_job():
     raise Exception("Intentional background job failure for Task D")
 
+
 def cancel_old_draft():
     frappe.db.sql("""
         UPDATE `tabJob Card`
         SET status = 'Cancelled' 
         WHERE docstatus = 0 AND       
-        creation < DATE_SUB(CURDATE,INTERVAL 30 DAYS) 
+        creation < DATE_SUB(CURDATE,INTERVAL 30 DAY) 
         LIMIT 1000
     """)
 
+
 def insert_bulk_audit_log():
     audit_logs = [
-        frappe.get_doc({
-            "doctype": "Audit Log",
-            "name": frappe.generate_hash(length=10),
-            "doctype_name": "Job Card",
-            "action": "bulk_insert_test",
-            "user": frappe.session.user,
-            "timestamp": frappe.utils.now_datetime()
-        })
+        frappe.get_doc(
+            {
+                "doctype": "Audit Log",
+                "name": frappe.generate_hash(length=10),
+                "doctype_name": "Job Card",
+                "action": "bulk_insert_test",
+                "user": frappe.session.user,
+                "timestamp": frappe.utils.now_datetime(),
+            }
+        )
         for _ in range(1000)
     ]
 
     bulk_insert("Audit Log", audit_logs, commit_chunks=True)
     return len(audit_logs)
 
+
 @frappe.whitelist()
 def get_job_summary():
-    job_card=frappe.form_dict.get("job_card")
-    job_card_doc=frappe.get_doc("Job Card",job_card)
+    job_card = frappe.form_dict.get("job_card")
+    job_card_doc = frappe.get_doc("Job Card", job_card)
     if not job_card_doc:
         raise NotFound()
-    summary={
+    summary = {
         "name": job_card_doc.name,
         "customer_name": job_card_doc.customer_name,
         "assigned_technician": job_card_doc.assigned_technician,
-        "status": job_card_doc.status
+        "status": job_card_doc.status,
     }
     return summary
 
+
 @frappe.whitelist(allow_guest=True)
 def get_job_by_phone():
-    phone=frappe.form_dict.get("phone")
+    phone = frappe.form_dict.get("phone")
     if not phone:
         raise BadRequest("Phone  number is required")
-    
+
     phone = re.sub(r"\D", "", phone)
 
     if not phone or len(phone) > 10:
-        raise BadRequest(
-            "Phone number must contain maximum 10 digits"
-        )
-    
-    ip=frappe.local.request_ip or "unknown"
-    
-    minutes=now_datetime().strftime("%Y-%m-%d %H:%M")
+        raise BadRequest("Phone number must contain maximum 10 digits")
 
-    cache_key=f"get_job_phone:{ip}:{minutes}"
-    cache_count=frappe.cache().get_value(cache_key) or 0
-    count=int(cache_count)
-    if count>=10:
-        raise TooManyRequests("Rate limit exceeded" )
-    frappe.cache().set_value(cache_key,count+1,expires_in_sec=60)
-    job_cards=frappe.get_list(
+    ip = frappe.local.request_ip or "unknown"
+
+    minutes = now_datetime().strftime("%Y-%m-%d %H:%M")
+
+    cache_key = f"get_job_phone:{ip}:{minutes}"
+    cache_count = frappe.cache().get_value(cache_key) or 0
+    count = int(cache_count)
+    if count >= 10:
+        raise TooManyRequests("Rate limit exceeded")
+    frappe.cache().set_value(cache_key, count + 1, expires_in_sec=60)
+    job_cards = frappe.get_list(
         "Job Card",
-        filters={"customer_phone":phone},
-        fields=["name","customer_name","assigned_technician","status"],
-        as_list=False
-
+        filters={"customer_phone": phone},
+        fields=["name", "customer_name", "assigned_technician", "status"],
+        as_list=False,
     )
     if not job_cards:
         raise NotFound()

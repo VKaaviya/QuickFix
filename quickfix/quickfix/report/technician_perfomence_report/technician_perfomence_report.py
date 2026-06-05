@@ -57,25 +57,23 @@ def getcolumns():
             "fieldname": "completion_rate",
             "fieldtype": "Percent",
             "width": 150,
-            "color":["green,<=,70","red,>,70"],
+            "color": ["green,<=,70", "red,>,70"],
         },
     ]
 
     # Dynamic Device Type Columns
     for dt in frappe.get_list("Device Type", fields=["name"]):
 
-        fieldname = (
-            dt.name.lower()
-            .replace(" ", "_")
-            .replace("-", "_")
-        )
+        fieldname = dt.name.lower().replace(" ", "_").replace("-", "_")
 
-        columns.append({
-            "label": _(dt.name),
-            "fieldname": fieldname,
-            "fieldtype": "Int",
-            "width": 120,
-        })
+        columns.append(
+            {
+                "label": _(dt.name),
+                "fieldname": fieldname,
+                "fieldtype": "Int",
+                "width": 120,
+            }
+        )
 
     return columns
 
@@ -88,13 +86,12 @@ def get_data(filters):
 
     if filters.get("from_date"):
         job_filters["creation"] = [">=", filters.get("from_date")]
-        
 
     if filters.get("to_date"):
         if "creation" in job_filters:
             job_filters["creation"] = [
                 "between",
-                [filters.get("from_date"), filters.get("to_date")]
+                [filters.get("from_date"), filters.get("to_date")],
             ]
         else:
             job_filters["creation"] = ["<=", filters.get("to_date")]
@@ -123,29 +120,19 @@ def get_data(filters):
 
     data = []
 
-    device_types = frappe.get_list(
-        "Device Type",
-        fields=["name"]
-    )
+    device_types = frappe.get_list("Device Type", fields=["name"])
 
     for technician, tech_jobs in technician_map.items():
 
         total_jobs = len(tech_jobs)
 
-        completed = len([
-            j for j in tech_jobs
-            if j.status in ["Completed", "Delivered"]
-        ])
-
-        revenue = sum([
-            j.final_amountc or 0
-            for j in tech_jobs
-        ])
-
-        completion_rate = (
-            (completed / total_jobs) * 100
-            if total_jobs else 0
+        completed = len(
+            [j for j in tech_jobs if j.status in ["Completed", "Delivered"]]
         )
+
+        revenue = sum([j.final_amountc or 0 for j in tech_jobs])
+
+        completion_rate = (completed / total_jobs) * 100 if total_jobs else 0
 
         turnaround_total = 0
         turnaround_count = 0
@@ -154,18 +141,12 @@ def get_data(filters):
 
             if j.delivery_date and j.diagnosis_date:
 
-                turnaround_days = (
-                    j.delivery_date - j.diagnosis_date
-                ).days
-                
+                turnaround_days = (j.delivery_date - j.diagnosis_date).days
 
                 turnaround_total += turnaround_days
                 turnaround_count += 1
 
-        avg_turnaround = (
-            turnaround_total / turnaround_count
-            if turnaround_count else 0
-        )
+        avg_turnaround = turnaround_total / turnaround_count if turnaround_count else 0
 
         row = {
             "technician": technician,
@@ -179,16 +160,16 @@ def get_data(filters):
         # Dynamic Device Type Counts
         for dt in device_types:
 
-            fieldname = (
-                dt.name.lower()
-                .replace(" ", "_")
-                .replace("-", "_")
-            )
+            fieldname = dt.name.lower().replace(" ", "_").replace("-", "_")
 
-            count = len([
-                j for j in tech_jobs
-                if j.device_type == dt.name and j.status in ["Completed", "Delivered"]
-            ])
+            count = len(
+                [
+                    j
+                    for j in tech_jobs
+                    if j.device_type == dt.name
+                    and j.status in ["Completed", "Delivered"]
+                ]
+            )
 
             row[fieldname] = count
 
@@ -219,13 +200,9 @@ def get_chart(data):
 
 def get_report_summary(data):
 
-    total_jobs = sum([
-        d["total_jobs"] for d in data
-    ])
+    total_jobs = sum([d["total_jobs"] for d in data])
 
-    total_revenue = sum([
-        d["revenue"] for d in data
-    ])
+    total_revenue = sum([d["revenue"] for d in data])
 
     best_technician = ""
 

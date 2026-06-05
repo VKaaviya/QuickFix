@@ -1,5 +1,3 @@
-
-
 import frappe
 
 
@@ -29,14 +27,15 @@ def after_install():
             }
         ).insert(ignore_permissions=True)
         settings_created = True
-    frappe.make_property_setter({
-        "doctype": "Job Card",
-				"doctype_or_field": "DocField",
-				"fieldname": "remarks",
-				"property": "in_list_view",
-				"value": 1,
-				"property_type": "Check",
-			},
+    frappe.make_property_setter(
+        {
+            "doctype": "Job Card",
+            "doctype_or_field": "DocField",
+            "fieldname": "remarks",
+            "property": "in_list_view",
+            "value": 1,
+            "property_type": "Check",
+        },
     )
 
     message = "Quickfix setup completed successfully."
@@ -46,6 +45,3 @@ def after_install():
         message += " Created default Quickfix Settings."
 
     frappe.msgprint(message)
-
-
-

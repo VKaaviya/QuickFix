@@ -12,35 +12,30 @@ EXTRA_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 IGNORE_TEST_RECORD_DEPENDENCIES = []  # eg. ["User"]
 
 
-
 class IntegrationTestSparepart(IntegrationTestCase):
-	"""
-	Integration tests for Sparepart.
-	Use this class for testing interactions between multiple components.
-	"""
+    """
+    Integration tests for Sparepart.
+    Use this class for testing interactions between multiple components.
+    """
 
-	def test_unit_cost_selling_cost_validation(self):
-		"""Test that selling price must be greater than unit cost."""
-		spare_part=make_spare_part()
-		
-		spare_part.unit_cost = 100.0
-		spare_part.selling_price = 90.0
-		with self.assertRaises(frappe.ValidationError):
-			spare_part.save()
-		spare_part.reload()
+    def test_unit_cost_selling_cost_validation(self):
+        """Test that selling price must be greater than unit cost."""
+        spare_part = make_spare_part()
 
-		spare_part.unit_cost=100.0
-		spare_part.selling_price=100.0
-		with self.assertRaises(frappe.ValidationError):
-			spare_part.save()
-		spare_part.reload()
+        spare_part.unit_cost = 100.0
+        spare_part.selling_price = 90.0
+        with self.assertRaises(frappe.ValidationError):
+            spare_part.save()
+        spare_part.reload()
 
-		spare_part.unit_cost=100.0
-		spare_part.selling_price=101.0
-		spare_part.save()
-		self.assertEqual(spare_part.unit_cost, 100.0)
-		self.assertEqual(spare_part.selling_price, 101.0)
+        spare_part.unit_cost = 100.0
+        spare_part.selling_price = 100.0
+        with self.assertRaises(frappe.ValidationError):
+            spare_part.save()
+        spare_part.reload()
 
-
-
-
+        spare_part.unit_cost = 100.0
+        spare_part.selling_price = 101.0
+        spare_part.save()
+        self.assertEqual(spare_part.unit_cost, 100.0)
+        self.assertEqual(spare_part.selling_price, 101.0)

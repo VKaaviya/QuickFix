@@ -18,6 +18,7 @@ from quickfix.quickfix.doctype.job_card.job_card import JobCard
 # like validate, on_submit, or on_cancel. doc_events is simpler for single
 # event handlers, but it does not provide a custom class controller.
 
+
 class CustomJobCard(JobCard):
     def validate(self):
         super().validate()
@@ -32,6 +33,7 @@ class CustomJobCard(JobCard):
                 job_card=self.name,
                 manager=manager,
             )
+
 
 def send_urgent_notification(job_card, manager):
     job_card_url = frappe.utils.get_url_to_form("Job Card", job_card)

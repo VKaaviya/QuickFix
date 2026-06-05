@@ -1,6 +1,5 @@
 {
  "actions": [],
- "allow_rename": 1,
  "autoname": "TECH.####",
  "creation": "2026-04-22 12:15:49.494530",
  "doctype": "DocType",
@@ -84,7 +83,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-05-11 15:50:47.864093",
+ "modified": "2026-06-04 21:17:51.140765",
  "modified_by": "Administrator",
  "module": "Quickfix",
  "name": "Technician",
@@ -138,8 +137,8 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
+ "search_fields": "technician_name",
  "sort_field": "creation",
  "sort_order": "DESC",
- "states": [],
- "title_field": "technician_name"
+ "states": []
 }
